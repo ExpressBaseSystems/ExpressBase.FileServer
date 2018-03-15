@@ -12,7 +12,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ServiceStack;
 using ServiceStack.Auth;
-using ServiceStack.Discovery.Redis;
 using ServiceStack.Logging;
 using ServiceStack.Redis;
 using System;
@@ -111,18 +110,9 @@ namespace ExpressBase.StaticFileServer
                Environment.GetEnvironmentVariable(EnvironmentConstants.EB_REDIS_PORT));
 
             container.Register<IRedisClientsManager>(c => new RedisManagerPool(redisConnectionString));
-
             container.Register<IEbConnectionFactory>(c => new EbConnectionFactory(c)).ReusedWithin(ReuseScope.Request);
-
             container.Register<IEbServerEventClient>(c => new EbServerEventClient(c)).ReusedWithin(ReuseScope.Request);
             container.Register<IEbMqClient>(c => new EbMqClient(c)).ReusedWithin(ReuseScope.Request);
-
-            SetConfig(new HostConfig
-            {
-                WebHostUrl = Environment.GetEnvironmentVariable(EnvironmentConstants.EB_STATICFILESERVER_INT_URL)
-            });
-
-            Plugins.Add(new RedisServiceDiscoveryFeature());
 
             this.GlobalRequestFilters.Add((req, res, requestDto) =>
             {
