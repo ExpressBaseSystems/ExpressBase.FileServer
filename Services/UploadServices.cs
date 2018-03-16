@@ -30,7 +30,7 @@ namespace ExpressBase.StaticFileServer
                     }
                 }
 
-                this.Gateway.Send<bool>(new UploadFileMqRequest()
+                this.MqClient.Post<bool>(new UploadFileMqRequest()
                 {
                     BucketName = bucketName,
                     FileDetails = request.FileDetails,
