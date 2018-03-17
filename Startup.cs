@@ -99,8 +99,8 @@ namespace ExpressBase.StaticFileServer
 
             container.Register<IRedisClientsManager>(c => new RedisManagerPool(redisConnectionString));
             container.Register<IEbConnectionFactory>(c => new EbConnectionFactory(c)).ReusedWithin(ReuseScope.Request);
-            container.Register<IEbServerEventClient>(c => new EbServerEventClient(c)).ReusedWithin(ReuseScope.Request);
-            container.Register<IEbMqClient>(c => new EbMqClient(c)).ReusedWithin(ReuseScope.Request);
+            container.Register<IEbServerEventClient>(c => new EbServerEventClient()).ReusedWithin(ReuseScope.Request);
+            container.Register<IEbMqClient>(c => new EbMqClient()).ReusedWithin(ReuseScope.Request);
 
             this.GlobalRequestFilters.Add((req, res, requestDto) =>
             {

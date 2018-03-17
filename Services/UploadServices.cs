@@ -29,7 +29,7 @@ namespace ExpressBase.StaticFileServer
                         bucketName = "dp_images";
                     }
                 }
-
+                this.MqClient.AddAuthentication(this.Request);
                 this.MqClient.Post<bool>(new UploadFileMqRequest()
                 {
                     BucketName = bucketName,
@@ -48,9 +48,11 @@ namespace ExpressBase.StaticFileServer
         [Authenticate]
         public bool Post(UploadImageAsyncRequest request)
         {
+            Log.Info("Inside ImageAsyncUpload");
             string bucketName = "images_original";
             if (request.ImageInfo.FileName.StartsWith("dp"))
                 bucketName = "dp_images";
+            this.MqClient.AddAuthentication(this.Request);
             try
             {
                 this.MqClient.Post<bool>(new UploadFileMqRequest()
