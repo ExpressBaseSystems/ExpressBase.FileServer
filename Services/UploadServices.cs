@@ -4,6 +4,7 @@ using ExpressBase.Common.EbServiceStack.ReqNRes;
 using ExpressBase.Common.ServerEvents_Artifacts;
 using ExpressBase.Common.ServiceClients;
 using ServiceStack;
+using ServiceStack.Messaging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +14,9 @@ namespace ExpressBase.StaticFileServer
 {
     public class UploadServices : BaseService
     {
-        public UploadServices(IEbConnectionFactory _dbf, IEbServerEventClient _sec, IEbMqClient _mqc) : base(_dbf, _sec, _mqc) { }
+        public UploadServices(IEbConnectionFactory _dbf, IMessageProducer _msp, IMessageQueueClient _mqc) : base(_dbf, _msp, _mqc)
+        {
+        }
 
         [Authenticate]
         public bool Post(UploadFileAsyncRequest request)
@@ -29,12 +32,24 @@ namespace ExpressBase.StaticFileServer
                         bucketName = "dp_images";
                     }
                 }
-                this.MqClient.AddAuthentication(this.Request);
-                this.MqClient.Post<bool>(new UploadFileMqRequest()
+                this.MessageProducer3.Publish(new UploadFileRequest()
                 {
+                    FileDetails = new FileMeta
+                    {
+                        FileName = request.FileDetails.FileName,
+                        MetaDataDictionary = (request.FileDetails.MetaDataDictionary != null) ?
+                        request.FileDetails.MetaDataDictionary :
+                        new Dictionary<String, List<string>>() { },
+                        FileType = request.FileDetails.FileType,
+                        Length = request.FileDetails.Length
+                    },
+                    FileByte = request.FileByte,
                     BucketName = bucketName,
-                    FileDetails = request.FileDetails,
-                    FileByte = request.FileByte
+                    TenantAccountId = request.TenantAccountId,
+                    UserId = request.UserId,
+                    UserAuthId = request.UserAuthId,
+                    BToken = (!String.IsNullOrEmpty(this.Request.Authorization)) ? this.Request.Authorization.Replace("Bearer", string.Empty).Trim() : String.Empty,
+                    RToken = (!String.IsNullOrEmpty(this.Request.Headers["rToken"])) ? this.Request.Headers["rToken"] : String.Empty
                 });
             }
             catch (Exception e)
@@ -52,14 +67,26 @@ namespace ExpressBase.StaticFileServer
             string bucketName = "images_original";
             if (request.ImageInfo.FileName.StartsWith("dp"))
                 bucketName = "dp_images";
-            this.MqClient.AddAuthentication(this.Request);
             try
             {
-                this.MqClient.Post<bool>(new UploadFileMqRequest()
+                this.MessageProducer3.Publish(new UploadFileRequest()
                 {
-                   BucketName = bucketName,
-                   FileDetails = request.ImageInfo,
-                   FileByte = request.ImageByte
+                    FileDetails = new FileMeta
+                    {
+                        FileName = request.ImageInfo.FileName,
+                        MetaDataDictionary = (request.ImageInfo.MetaDataDictionary != null) ?
+                        request.ImageInfo.MetaDataDictionary :
+                        new Dictionary<String, List<string>>() { },
+                        FileType = request.ImageInfo.FileType,
+                        Length = request.ImageInfo.Length
+                    },
+                    FileByte = request.ImageByte,
+                    BucketName = bucketName,
+                    TenantAccountId = request.TenantAccountId,
+                    UserId = request.UserId,
+                    UserAuthId = request.UserAuthId,
+                    BToken = (!String.IsNullOrEmpty(this.Request.Authorization)) ? this.Request.Authorization.Replace("Bearer", string.Empty).Trim() : String.Empty,
+                    RToken = (!String.IsNullOrEmpty(this.Request.Headers["rToken"])) ? this.Request.Headers["rToken"] : String.Empty
                 });
             }
             catch (Exception e)

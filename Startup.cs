@@ -14,6 +14,8 @@ using Microsoft.Extensions.Logging;
 using ServiceStack;
 using ServiceStack.Auth;
 using ServiceStack.Logging;
+using ServiceStack.Messaging;
+using ServiceStack.RabbitMq;
 using ServiceStack.Redis;
 using System;
 using System.IdentityModel.Tokens.Jwt;
@@ -101,6 +103,25 @@ namespace ExpressBase.StaticFileServer
             container.Register<IEbConnectionFactory>(c => new EbConnectionFactory(c)).ReusedWithin(ReuseScope.Request);
             container.Register<IEbServerEventClient>(c => new EbServerEventClient()).ReusedWithin(ReuseScope.Request);
             container.Register<IEbMqClient>(c => new EbMqClient()).ReusedWithin(ReuseScope.Request);
+
+            RabbitMqMessageFactory rabitFactory = new RabbitMqMessageFactory();
+            rabitFactory.ConnectionFactory.UserName = Environment.GetEnvironmentVariable(EnvironmentConstants.EB_RABBIT_USER);
+            rabitFactory.ConnectionFactory.Password = Environment.GetEnvironmentVariable(EnvironmentConstants.EB_RABBIT_PASSWORD);
+            rabitFactory.ConnectionFactory.HostName = Environment.GetEnvironmentVariable(EnvironmentConstants.EB_RABBIT_HOST);
+            rabitFactory.ConnectionFactory.Port = Convert.ToInt32(Environment.GetEnvironmentVariable(EnvironmentConstants.EB_RABBIT_PORT));
+            rabitFactory.ConnectionFactory.VirtualHost = Environment.GetEnvironmentVariable(EnvironmentConstants.EB_RABBIT_VHOST);
+
+            var mqServer = new RabbitMqServer(rabitFactory);
+
+            container.AddScoped<IMessageProducer, RabbitMqProducer>(serviceProvider =>
+            {
+                return mqServer.CreateMessageProducer() as RabbitMqProducer;
+            });
+
+            container.AddScoped<IMessageQueueClient, RabbitMqQueueClient>(serviceProvider =>
+            {
+                return mqServer.CreateMessageQueueClient() as RabbitMqQueueClient;
+            });
 
             this.GlobalRequestFilters.Add((req, res, requestDto) =>
             {
