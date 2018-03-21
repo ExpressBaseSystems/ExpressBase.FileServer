@@ -38,7 +38,7 @@ namespace ExpressBase.StaticFileServer.Services
 
                 objectId = new ObjectId(FileNameParts[0]);
 
-                return (new EbConnectionFactory(request.TenantAccountId, this.Redis)).FilesDB.DownloadFile(new ObjectId(FileNameParts[0]), bucketName);
+                return this.EbConnectionFactory.FilesDB.DownloadFile(new ObjectId(FileNameParts[0]), bucketName);
             }
             else if (FileNameParts.Length == 2)
             {
@@ -59,7 +59,7 @@ namespace ExpressBase.StaticFileServer.Services
 
             if (bucketName != string.Empty)
             {
-                return (this.EbConnectionFactory.FilesDB.DownloadFile(request.FileDetails.FileName, bucketName));
+                return this.EbConnectionFactory.FilesDB.DownloadFile(request.FileDetails.FileName, bucketName);
             }
             else { return (new byte[0]); }
         }
