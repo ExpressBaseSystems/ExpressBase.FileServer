@@ -12,8 +12,26 @@ namespace ExpressBase.StaticFileServer.Services
 {
     public class DownloadServices : BaseService
     {
-        public DownloadServices(IEbConnectionFactory _dbf) : base(_dbf)
+        public DownloadServices(IEbConnectionFactory _dbf) : base(_dbf) { }
+
+        public byte[] Post(DownloadFileExtRequest request)
         {
+            string bucketName = "external";
+
+            if (request.FileName.StartsWith("logo"))
+            {
+                bucketName = "sol_logos";
+            }
+
+            try
+            {
+                return InfraConnectionFactory.FilesDB.DownloadFile(request.FileName, bucketName);
+            }
+            catch (Exception e)
+            {
+                Log.Info("Exception:" + e.ToString());
+                return null;
+            }
         }
 
         [Authenticate]

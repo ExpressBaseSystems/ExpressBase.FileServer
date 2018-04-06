@@ -131,7 +131,7 @@ namespace ExpressBase.StaticFileServer
                 try
                 {
                     log.Info("In Try");
-                    if (requestDto != null)
+                    if (requestDto != null && requestDto.GetType() != typeof(DownloadFileExtRequest))
                     {
                         log.Info("In Auth Header");
                         var auth = req.Headers[HttpHeaders.Authorization];

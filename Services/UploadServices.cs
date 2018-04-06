@@ -1,4 +1,5 @@
 ﻿using ExpressBase.Common;
+using ExpressBase.Common.Constants;
 using ExpressBase.Common.Data;
 using ExpressBase.Common.EbServiceStack.ReqNRes;
 using ExpressBase.Common.ServerEvents_Artifacts;
@@ -14,9 +15,7 @@ namespace ExpressBase.StaticFileServer
 {
     public class UploadServices : BaseService
     {
-        public UploadServices(IEbConnectionFactory _dbf, IMessageProducer _msp, IMessageQueueClient _mqc) : base(_dbf, _msp, _mqc)
-        {
-        }
+        public UploadServices(IEbConnectionFactory _dbf, IMessageProducer _msp, IMessageQueueClient _mqc) : base(_dbf, _msp, _mqc) { }
 
         [Authenticate]
         public bool Post(UploadFileAsyncRequest request)
@@ -67,6 +66,13 @@ namespace ExpressBase.StaticFileServer
             string bucketName = "images_original";
             if (request.ImageInfo.FileName.StartsWith("dp"))
                 bucketName = "dp_images";
+            if (request.ImageInfo.FileName.StartsWith("logo"))
+            {
+                bucketName = "sol_logos";
+
+                //Temporary only for testing 
+                request.TenantAccountId = CoreConstants.EXPRESSBASE;
+            }
             try
             {
                 this.MessageProducer3.Publish(new UploadFileRequest()
