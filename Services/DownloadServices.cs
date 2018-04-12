@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using ExpressBase.Common;
+using ExpressBase.Common.Constants;
 using ExpressBase.Common.Data;
 using ExpressBase.Common.EbServiceStack.ReqNRes;
 using MongoDB.Bson;
@@ -16,11 +17,11 @@ namespace ExpressBase.StaticFileServer.Services
 
         public byte[] Post(DownloadFileExtRequest request)
         {
-            string bucketName = "external";
+            string bucketName = StaticFileConstants.EXTERNAL;
 
-            if (request.FileName.StartsWith("logo"))
+            if (request.FileName.StartsWith(StaticFileConstants.LOGO))
             {
-                bucketName = "sol_logos";
+                bucketName = StaticFileConstants.SOL_LOGOS;
             }
 
             try
@@ -39,20 +40,20 @@ namespace ExpressBase.StaticFileServer.Services
         {
             string bucketName = string.Empty;
             ObjectId objectId;
-            var FileNameParts = request.FileDetails.FileName.Substring(0, request.FileDetails.FileName.IndexOf('.'))?.Split('_');
+            var FileNameParts = request.FileDetails.FileName.Substring(0, request.FileDetails.FileName.IndexOf(CharConstants.DOT))?.Split(CharConstants.UNDERSCORE);
             // 3 cases = > 1. ObjectId.(fileextension), 2. ObjectId_(size).(imageextionsion), 3. dp_(userid)_(size).(imageextension)
-            if (request.FileDetails.FileName.StartsWith("dp"))
+            if (request.FileDetails.FileName.StartsWith(StaticFileConstants.DP))
             {
                 if (Enum.IsDefined(typeof(ImageTypes), request.FileDetails.FileType.ToString()))
-                    bucketName = "dp_images";
+                    bucketName = StaticFileConstants.DP_IMAGES;
             }
             else if (FileNameParts.Length == 1)
             {
                 if (Enum.IsDefined(typeof(ImageTypes), request.FileDetails.FileType.ToString()))
-                    bucketName = "images_original";
+                    bucketName = StaticFileConstants.IMAGES_ORIGINAL;
 
                 if (bucketName == string.Empty)
-                    bucketName = "files";
+                    bucketName = StaticFileConstants.FILES;
 
                 objectId = new ObjectId(FileNameParts[0]);
 
@@ -62,12 +63,12 @@ namespace ExpressBase.StaticFileServer.Services
             {
                 if (Enum.IsDefined(typeof(ImageTypes), request.FileDetails.FileType.ToString()))
                 {
-                    if (FileNameParts[1] == "small")
-                        bucketName = "images_small";
-                    else if (FileNameParts[1] == "medium")
-                        bucketName = "images_medium";
-                    else if (FileNameParts[1] == "large")
-                        bucketName = "images_large";
+                    if (FileNameParts[1] == StaticFileConstants.SMALL)
+                        bucketName = StaticFileConstants.IMAGES_SMALL;
+                    else if (FileNameParts[1] == StaticFileConstants.MEDIUM)
+                        bucketName = StaticFileConstants.IMAGES_MEDIUM;
+                    else if (FileNameParts[1] == StaticFileConstants.LARGE)
+                        bucketName = StaticFileConstants.IMAGES_LARGE;
                 }
                 if (bucketName == string.Empty)
                 {

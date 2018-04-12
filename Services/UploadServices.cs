@@ -63,12 +63,12 @@ namespace ExpressBase.StaticFileServer
         public bool Post(UploadImageAsyncRequest request)
         {
             Log.Info("Inside ImageAsyncUpload");
-            string bucketName = "images_original";
-            if (request.ImageInfo.FileName.StartsWith("dp"))
-                bucketName = "dp_images";
-            if (request.ImageInfo.FileName.StartsWith("logo"))
+            string bucketName = StaticFileConstants.IMAGES_ORIGINAL;
+            if (request.ImageInfo.FileName.StartsWith(StaticFileConstants.DP))
+                bucketName = StaticFileConstants.DP_IMAGES;
+            if (request.ImageInfo.FileName.StartsWith(StaticFileConstants.LOGO))
             {
-                bucketName = "sol_logos";
+                bucketName = StaticFileConstants.SOL_LOGOS;
 
                 //Temporary only for testing 
                 request.TenantAccountId = CoreConstants.EXPRESSBASE;
