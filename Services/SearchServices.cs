@@ -1,19 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
-using ExpressBase.Common.Data;
+﻿using ExpressBase.Common.Data;
 using ExpressBase.Common.EbServiceStack.ReqNRes;
 using ServiceStack;
+using System;
+using System.Collections.Generic;
+using System.Data;
 
 namespace ExpressBase.StaticFileServer.Services
 {
     public class SearchServices : BaseService
     {
-        public SearchServices(IEbConnectionFactory _dbf) : base(_dbf)
-        {
-        }
+        public SearchServices(IEbConnectionFactory _dbf) : base(_dbf) { }
 
         [Authenticate]
         public List<FileMeta> Post(FindFilesByTagRequest request)
