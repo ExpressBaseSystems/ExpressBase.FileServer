@@ -3,7 +3,6 @@ using ExpressBase.Common.Constants;
 using ExpressBase.Common.Data;
 using ExpressBase.Common.EbServiceStack.ReqNRes;
 using ExpressBase.Common.ServiceClients;
-using ExpressBase.Common.ServiceStack;
 using ExpressBase.Common.ServiceStack.Auth;
 using Funq;
 using Microsoft.AspNetCore.Builder;
@@ -15,6 +14,7 @@ using ServiceStack;
 using ServiceStack.Auth;
 using ServiceStack.Logging;
 using ServiceStack.Messaging;
+using ServiceStack.ProtoBuf;
 using ServiceStack.RabbitMq;
 using ServiceStack.Redis;
 using System;
@@ -82,6 +82,10 @@ namespace ExpressBase.StaticFileServer
                 //EncryptPayload = true,
 #endif
             };
+
+            this.Plugins.Add(new CorsFeature(allowedHeaders: "Content-Type, Authorization, Access-Control-Allow-Origin, Access-Control-Allow-Credentials"));
+
+            this.Plugins.Add(new ProtoBufFormat());
 
             this.Plugins.Add(new AuthFeature(() => new CustomUserSession(),
                 new IAuthProvider[] {
