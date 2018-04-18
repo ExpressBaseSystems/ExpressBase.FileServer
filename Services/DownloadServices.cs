@@ -30,8 +30,8 @@ namespace ExpressBase.StaticFileServer.Services
                     }
 
                     fb = InfraConnectionFactory.FilesDB.DownloadFile(request.FileName, bucketName);
-
-                    EbFile.Bytea_ToFile(fb ?? null, sFilePath);
+                    if (fb != null)
+                        EbFile.Bytea_ToFile(fb, sFilePath);
                 }
 
                 MemoryStream ms = new MemoryStream(File.Exists(sFilePath) ? File.ReadAllBytes(sFilePath) : null);
