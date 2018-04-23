@@ -11,7 +11,9 @@ namespace ExpressBase.StaticFileServer.Services
 {
     public class DownloadServices : BaseService
     {
-        public DownloadServices(IEbConnectionFactory _dbf) : base(_dbf) { }
+        public DownloadServices(IEbConnectionFactory _dbf) : base(_dbf)
+        {
+        }
 
         public DownloadFileResponse Get(DownloadFileExtRequest request)
         {
@@ -60,7 +62,6 @@ namespace ExpressBase.StaticFileServer.Services
         [Authenticate]
         public DownloadFileResponse Get(DownloadFileRequest request)
         {
-
             byte[] fb = new byte[0];
 
             string sFilePath = string.Format("../StaticFiles/{0}/{1}", request.TenantAccountId, request.FileDetails.FileName);
@@ -105,7 +106,6 @@ namespace ExpressBase.StaticFileServer.Services
                         {
                         }
                     }
-
 
                     if (bucketName != string.Empty)
                     {

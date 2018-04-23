@@ -67,7 +67,9 @@ namespace ExpressBase.StaticFileServer
 
     public class AppHost : AppHostBase
     {
-        public AppHost() : base("EXPRESSbase Static File Server", typeof(AppHost).Assembly) { }
+        public AppHost() : base("EXPRESSbase Static File Server", typeof(AppHost).Assembly)
+        {
+        }
 
         public override void Configure(Container container)
         {
@@ -91,7 +93,6 @@ namespace ExpressBase.StaticFileServer
                 new IAuthProvider[] {
                     jwtprovider,
                 }));
-
 
 #if (DEBUG)
             SetConfig(new HostConfig { DebugMode = true });

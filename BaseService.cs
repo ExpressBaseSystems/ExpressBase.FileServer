@@ -5,10 +5,6 @@ using ServiceStack;
 using ServiceStack.Logging;
 using ServiceStack.Messaging;
 using ServiceStack.RabbitMq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace ExpressBase.StaticFileServer
 {
@@ -37,7 +33,9 @@ namespace ExpressBase.StaticFileServer
             }
         }
 
-        public BaseService() { }
+        public BaseService()
+        {
+        }
 
         public BaseService(IEbConnectionFactory _dbf)
         {

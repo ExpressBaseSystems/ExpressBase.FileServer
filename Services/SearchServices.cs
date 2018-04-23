@@ -9,7 +9,9 @@ namespace ExpressBase.StaticFileServer.Services
 {
     public class SearchServices : BaseService
     {
-        public SearchServices(IEbConnectionFactory _dbf) : base(_dbf) { }
+        public SearchServices(IEbConnectionFactory _dbf) : base(_dbf)
+        {
+        }
 
         [Authenticate]
         public List<FileMeta> Post(FindFilesByTagRequest request)

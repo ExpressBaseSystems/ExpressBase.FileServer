@@ -11,7 +11,9 @@ namespace ExpressBase.StaticFileServer
 {
     public class UploadServices : BaseService
     {
-        public UploadServices(IEbConnectionFactory _dbf, IMessageProducer _msp, IMessageQueueClient _mqc) : base(_dbf, _msp, _mqc) { }
+        public UploadServices(IEbConnectionFactory _dbf, IMessageProducer _msp, IMessageQueueClient _mqc) : base(_dbf, _msp, _mqc)
+        {
+        }
 
         [Authenticate]
         public bool Post(UploadFileAsyncRequest request)
@@ -66,7 +68,7 @@ namespace ExpressBase.StaticFileServer
             {
                 bucketName = StaticFileConstants.SOL_LOGOS;
 
-                //Temporary only for testing 
+                //Temporary only for testing
                 request.TenantAccountId = CoreConstants.EXPRESSBASE;
             }
             try
