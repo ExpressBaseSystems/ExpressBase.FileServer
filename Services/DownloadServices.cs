@@ -20,6 +20,10 @@ namespace ExpressBase.StaticFileServer.Services
             string sFilePath = string.Format("../StaticFiles/{0}/{1}", CoreConstants.EXPRESSBASE, request.FileName);
 
             byte[] fb = null;
+
+            DownloadFileResponse dfs = new DownloadFileResponse();
+
+            MemoryStream ms = null;
             try
             {
                 if (!System.IO.File.Exists(sFilePath))
@@ -35,28 +39,23 @@ namespace ExpressBase.StaticFileServer.Services
                     if (fb != null)
                         EbFile.Bytea_ToFile(fb, sFilePath);
                 }
+                if (File.Exists(sFilePath))
+                {
+                    ms = new MemoryStream(File.ReadAllBytes(sFilePath)); // Use a dummy for every use
 
-                MemoryStream ms = new MemoryStream(File.Exists(sFilePath) ? File.ReadAllBytes(sFilePath) : null);
-
-                DownloadFileResponse dfs = (ms != null) ?
-                    (new DownloadFileResponse
+                    dfs.StreamWrapper = new MemorystreamWrapper(ms);
+                    dfs.FileDetails = new FileMeta
                     {
-                        StreamWrapper = new MemorystreamWrapper(ms),
-                        FileDetails = new FileMeta
-                        {
-                            FileName = request.FileName,
-                            FileType = request.FileName.Split(CharConstants.DOT)[1]
-                        }
-                    })
-                    : null;
-
-                return dfs;
+                        FileName = request.FileName,
+                        FileType = request.FileName.Split(CharConstants.DOT)[1]
+                    };
+                }
             }
             catch (Exception e)
             {
                 Log.Info("Exception:" + e.ToString());
-                return null;
             }
+            return dfs;
         }
 
         [Authenticate]
@@ -67,6 +66,10 @@ namespace ExpressBase.StaticFileServer.Services
             string sFilePath = string.Format("../StaticFiles/{0}/{1}", request.TenantAccountId, request.FileDetails.FileName);
 
             var FileNameParts = request.FileDetails.FileName.Substring(0, request.FileDetails.FileName.IndexOf(CharConstants.DOT))?.Split(CharConstants.UNDERSCORE);
+
+            MemoryStream ms = null;
+
+            DownloadFileResponse dfs = new DownloadFileResponse();
 
             try
             {
@@ -116,31 +119,39 @@ namespace ExpressBase.StaticFileServer.Services
 
                         //return this.EbConnectionFactory.FilesDB.DownloadFile(request.FileDetails.FileName, bucketName);
                     }
-                    EbFile.Bytea_ToFile(fb ?? null, sFilePath);
+                    if (fb != null)
+                        EbFile.Bytea_ToFile(fb, sFilePath);
                 }
 
-                MemoryStream ms = new MemoryStream(File.Exists(sFilePath) ? File.ReadAllBytes(sFilePath) : null);
+                if (File.Exists(sFilePath))
+                {
+                    ms = new MemoryStream(File.ReadAllBytes(sFilePath));
 
-                return (ms != null) ?
-                    new DownloadFileResponse
+                    dfs.StreamWrapper = new MemorystreamWrapper(ms);
+                    dfs.FileDetails = new FileMeta
                     {
-                        StreamWrapper = new MemorystreamWrapper(ms),
-                        FileDetails = new FileMeta
-                        {
-                            FileName = request.FileDetails.FileName,
-                            FileType = request.FileDetails.FileType,
-                            Length = request.FileDetails.Length,
-                            ObjectId = request.FileDetails.ObjectId,
-                            UploadDateTime = request.FileDetails.UploadDateTime,
-                            MetaDataDictionary = request.FileDetails.MetaDataDictionary
-                        }
-                    } : null;
+                        FileName = request.FileDetails.FileName,
+                        FileType = request.FileDetails.FileType,
+                        Length = request.FileDetails.Length,
+                        ObjectId = request.FileDetails.ObjectId,
+                        UploadDateTime = request.FileDetails.UploadDateTime,
+                        MetaDataDictionary = request.FileDetails.MetaDataDictionary
+                    };
+                }
+                else
+                    throw new Exception("File Not Found");
+            }
+            catch (FormatException e)
+            {
+                Console.WriteLine("ObjectId not in Correct Format: " + FileNameParts[0].ToString());
             }
             catch (Exception e)
             {
                 Log.Info("Exception:" + e.ToString());
-                return null;
             }
+
+            return dfs;
+
         }
     }
 }
