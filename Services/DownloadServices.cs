@@ -112,7 +112,7 @@ namespace ExpressBase.StaticFileServer.Services
 
                     if (bucketName != string.Empty)
                     {
-                        if (objectId != null)
+                        if (objectId.Pid != 0)
                             fb = this.EbConnectionFactory.FilesDB.DownloadFile(objectId, bucketName);
                         else
                             fb = this.EbConnectionFactory.FilesDB.DownloadFile(request.FileDetails.FileName, bucketName);
