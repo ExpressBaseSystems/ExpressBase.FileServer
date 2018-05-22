@@ -16,7 +16,7 @@ namespace ExpressBase.StaticFileServer
         }
 
         [Authenticate]
-        public bool Post(UploadFileAsyncRequest request)
+        public String Post(UploadFileAsyncRequest request)
         {
             string bucketName = "files";
             try
@@ -52,13 +52,13 @@ namespace ExpressBase.StaticFileServer
             catch (Exception e)
             {
                 Log.Info("Exception:" + e.ToString());
-                return false;
+                return "false";
             }
-            return true;
+            return "true";
         }
 
         [Authenticate]
-        public bool Post(UploadImageAsyncRequest request)
+        public string Post(UploadImageAsyncRequest request)
         {
             Log.Info("Inside ImageAsyncUpload");
             string bucketName = StaticFileConstants.IMAGES_ORIGINAL;
@@ -96,9 +96,9 @@ namespace ExpressBase.StaticFileServer
             catch (Exception e)
             {
                 Log.Info("Exception:" + e.ToString());
-                return false;
+                return "false";
             }
-            return true;
+            return "true";
         }
     }
 }
