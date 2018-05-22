@@ -144,6 +144,12 @@ namespace ExpressBase.StaticFileServer
                             res.ReturnAuthRequired();
                         else
                         {
+                            if (req.Headers[CacheConstants.RTOKEN] != null)
+                            {
+                                Resolve<IEbServerEventClient>().AddAuthentication(req);
+                                Resolve<IEbMqClient>().AddAuthentication(req);
+
+                            }
                             var jwtoken = new JwtSecurityToken(auth.Replace("Bearer", string.Empty).Trim());
                             foreach (var c in jwtoken.Claims)
                             {
