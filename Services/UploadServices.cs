@@ -16,8 +16,9 @@ namespace ExpressBase.StaticFileServer
         }
 
         [Authenticate]
-        public String Post(UploadFileAsyncRequest request)
+        public UploadAsyncResponse Post(UploadFileAsyncRequest request)
         {
+            UploadAsyncResponse res = new UploadAsyncResponse();
             string bucketName = "files";
             try
             {
@@ -52,27 +53,31 @@ namespace ExpressBase.StaticFileServer
             catch (Exception e)
             {
                 Log.Info("Exception:" + e.ToString());
-                return "false";
+                res.ResponseStatus.Message = e.Message;
             }
-            return "true";
+            return res;
         }
 
         [Authenticate]
-        public string Post(UploadImageAsyncRequest request)
+        public UploadAsyncResponse Post(UploadImageAsyncRequest request)
         {
+            UploadAsyncResponse res = new UploadAsyncResponse();
+
             Log.Info("Inside ImageAsyncUpload");
             string bucketName = StaticFileConstants.IMAGES_ORIGINAL;
-            if (request.ImageInfo.FileName.StartsWith(StaticFileConstants.DP))
-                bucketName = StaticFileConstants.DP_IMAGES;
-            if (request.ImageInfo.FileName.StartsWith(StaticFileConstants.LOGO))
-            {
-                bucketName = StaticFileConstants.SOL_LOGOS;
 
-                //Temporary only for testing
-                request.TenantAccountId = CoreConstants.EXPRESSBASE;
-            }
             try
             {
+                if (request.ImageInfo.FileName.StartsWith(StaticFileConstants.DP))
+                    bucketName = StaticFileConstants.DP_IMAGES;
+                if (request.ImageInfo.FileName.StartsWith(StaticFileConstants.LOGO))
+                {
+                    bucketName = StaticFileConstants.SOL_LOGOS;
+
+                    //Temporary only for testing
+                    request.TenantAccountId = CoreConstants.EXPRESSBASE;
+                }
+
                 this.MessageProducer3.Publish(new UploadFileRequest()
                 {
                     FileDetails = new FileMeta
@@ -96,9 +101,9 @@ namespace ExpressBase.StaticFileServer
             catch (Exception e)
             {
                 Log.Info("Exception:" + e.ToString());
-                return "false";
+                res.ResponseStatus.Message = e.Message;
             }
-            return "true";
+            return res;
         }
     }
 }
