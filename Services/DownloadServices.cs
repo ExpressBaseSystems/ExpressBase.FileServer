@@ -144,6 +144,7 @@ namespace ExpressBase.StaticFileServer.Services
             catch (FormatException e)
             {
                 Console.WriteLine("ObjectId not in Correct Format: " + FileNameParts[0].ToString());
+                Console.WriteLine("Exception: " + e.ToString());
             }
             catch (Exception e)
             {
