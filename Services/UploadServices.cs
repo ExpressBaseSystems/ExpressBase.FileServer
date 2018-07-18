@@ -70,13 +70,16 @@ namespace ExpressBase.StaticFileServer
             {
                 if (request.ImageInfo.FileName.StartsWith(StaticFileConstants.DP))
                     bucketName = StaticFileConstants.DP_IMAGES;
-                if (request.ImageInfo.FileName.StartsWith(StaticFileConstants.LOGO))
+                else if (request.ImageInfo.FileName.StartsWith(StaticFileConstants.LOGO))
                 {
                     bucketName = StaticFileConstants.SOL_LOGOS;
 
                     //Temporary only for testing
                     request.TenantAccountId = CoreConstants.EXPRESSBASE;
                 }
+                else if (request.ImageInfo.FileName.StartsWith(StaticFileConstants.LOCATION_DP))
+                    bucketName = StaticFileConstants.LOCATION_IMAGES;
+
 
                 this.MessageProducer3.Publish(new UploadFileRequest()
                 {
