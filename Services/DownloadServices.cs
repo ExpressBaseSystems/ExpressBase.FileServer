@@ -78,11 +78,16 @@ namespace ExpressBase.StaticFileServer.Services
                     string bucketName = string.Empty;
                     ObjectId objectId = new ObjectId();
 
-                    // 3 cases = > 1. ObjectId.(fileextension), 2. ObjectId_(size).(imageextionsion), 3. dp_(userid)_(size).(imageextension)
+                    // 3 cases = > 1. ObjectId.(fileextension), 2. ObjectId_(size).(imageextionsion), 3. dp_(userid)_(size).(imageextension) 4. loc_dp_().(imageextension)
                     if (request.FileDetails.FileName.StartsWith(StaticFileConstants.DP))
                     {
                         if (Enum.IsDefined(typeof(ImageTypes), request.FileDetails.FileType.ToString()))
                             bucketName = StaticFileConstants.DP_IMAGES;
+                    }
+                    else if (request.FileDetails.FileName.StartsWith(StaticFileConstants.LOC))
+                    {
+                        if (Enum.IsDefined(typeof(ImageTypes), request.FileDetails.FileType.ToString()))
+                            bucketName = StaticFileConstants.LOCATION_IMAGES;
                     }
                     else if (FileNameParts.Length == 1)
                     {
