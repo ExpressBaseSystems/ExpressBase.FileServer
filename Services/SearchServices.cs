@@ -33,7 +33,7 @@ namespace ExpressBase.StaticFileServer.Services
                         FileList.Add(
                             new FileMeta()
                             {
-                                ObjectId = dr["objid"].ToString(),
+                                ObjectId = new EbFileId(dr["objid"].ToString()),
                                 FileType = dr["filetype"].ToString(),
                                 Length = (Int64)dr["length"],
                                 UploadDateTime = (DateTime)dr["uploaddatetime"]
