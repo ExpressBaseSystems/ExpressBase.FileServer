@@ -22,7 +22,7 @@ namespace ExpressBase.StaticFileServer.Services
                 try
                 {
                     con.Open();
-                    string sql = @"SELECT id, userid, objid, length, tags, bucketname, filetype, uploaddatetime, eb_del FROM public.eb_files WHERE regexp_split_to_array(tags, ',') @> @tags AND COALESCE(eb_del, 'F')='F';";
+                    string sql = @"SELECT id, userid, filestore_id, length, tags, filecategory, filetype, uploadts, eb_del FROM eb_files_ref WHERE regexp_split_to_array(tags, ',') @> @tags AND COALESCE(eb_del, 'F')='F';";
                     DataTable dt = new DataTable();
                     var ada = new Npgsql.NpgsqlDataAdapter(sql, con);
                     ada.SelectCommand.Parameters.Add(new Npgsql.NpgsqlParameter("tags", NpgsqlTypes.NpgsqlDbType.Array | NpgsqlTypes.NpgsqlDbType.Text) { Value = request.Tags });
@@ -33,7 +33,7 @@ namespace ExpressBase.StaticFileServer.Services
                         FileList.Add(
                             new FileMeta()
                             {
-                                ObjectId = new EbFileId(dr["objid"].ToString()),
+                                FileStoreId = dr["objid"].ToString(),
                                 FileType = dr["filetype"].ToString(),
                                 Length = (Int64)dr["length"],
                                 UploadDateTime = (DateTime)dr["uploaddatetime"]

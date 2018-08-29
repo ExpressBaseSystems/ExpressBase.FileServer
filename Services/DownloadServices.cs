@@ -63,7 +63,7 @@ namespace ExpressBase.StaticFileServer.Services
         {
             byte[] fb = new byte[0];
 
-            string sFilePath = string.Format("../StaticFiles/{0}/{1}", request.TenantAccountId, request.FileDetails.ObjectId.ObjectId);
+            string sFilePath = string.Format("../StaticFiles/{0}/{1}", request.TenantAccountId, request.FileDetails.FileStoreId);
 
             MemoryStream ms = null;
 
@@ -75,7 +75,7 @@ namespace ExpressBase.StaticFileServer.Services
                 {
                     EbFileCategory category = request.FileDetails.FileCategory;
 
-                    fb = this.EbConnectionFactory.FilesDB.DownloadFileById(request.FileDetails.ObjectId, category);
+                    fb = this.EbConnectionFactory.FilesDB.DownloadFileById(request.FileDetails.FileStoreId, category);
 
                     if (fb != null)
                     {
@@ -93,7 +93,7 @@ namespace ExpressBase.StaticFileServer.Services
                         FileName = request.FileDetails.FileName,
                         FileType = request.FileDetails.FileType,
                         Length = request.FileDetails.Length,
-                        ObjectId = request.FileDetails.ObjectId,
+                        FileStoreId = request.FileDetails.FileStoreId,
                         UploadDateTime = request.FileDetails.UploadDateTime,
                         MetaDataDictionary = request.FileDetails.MetaDataDictionary,
                     };
@@ -119,7 +119,7 @@ namespace ExpressBase.StaticFileServer.Services
         {
             byte[] fb = new byte[0];
 
-            string sFilePath = string.Format("../StaticFiles/{0}/{1}", request.TenantAccountId, request.ImageInfo.ObjectId.ObjectId);
+            string sFilePath = string.Format("../StaticFiles/{0}/{1}", request.TenantAccountId, request.ImageInfo.FileStoreId);
 
             MemoryStream ms = null;
 
@@ -131,7 +131,7 @@ namespace ExpressBase.StaticFileServer.Services
                 {
                     EbFileCategory category = request.ImageInfo.FileCategory;
 
-                    fb = this.EbConnectionFactory.FilesDB.DownloadFileById(request.ImageInfo.ObjectId, category);
+                    fb = this.EbConnectionFactory.FilesDB.DownloadFileById(request.ImageInfo.FileStoreId, category);
 
                     if (fb != null)
                         EbFile.Bytea_ToFile(fb, sFilePath);
@@ -147,7 +147,7 @@ namespace ExpressBase.StaticFileServer.Services
                         FileName = request.ImageInfo.FileName,
                         FileType = request.ImageInfo.FileType,
                         Length = request.ImageInfo.Length,
-                        ObjectId = request.ImageInfo.ObjectId,
+                        FileStoreId = request.ImageInfo.FileStoreId,
                         UploadDateTime = request.ImageInfo.UploadDateTime,
                         MetaDataDictionary = request.ImageInfo.MetaDataDictionary,
                     };
@@ -201,7 +201,7 @@ namespace ExpressBase.StaticFileServer.Services
                         FileName = request.ImageInfo.FileName,
                         FileType = request.ImageInfo.FileType,
                         Length = request.ImageInfo.Length,
-                        ObjectId = request.ImageInfo.ObjectId,
+                        FileStoreId = request.ImageInfo.FileStoreId,
                         UploadDateTime = request.ImageInfo.UploadDateTime,
                         MetaDataDictionary = request.ImageInfo.MetaDataDictionary,
                     };
