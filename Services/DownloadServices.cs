@@ -3,8 +3,11 @@ using ExpressBase.Common.Constants;
 using ExpressBase.Common.Data;
 using ExpressBase.Common.EbServiceStack.ReqNRes;
 using ExpressBase.Common.Enums;
+using ExpressBase.Common.Structures;
 using ServiceStack;
 using System;
+using System.Collections.Generic;
+using System.Data.Common;
 using System.IO;
 using System.Linq;
 
@@ -96,7 +99,7 @@ namespace ExpressBase.StaticFileServer.Services
                         Length = request.FileDetails.Length,
                         FileStoreId = request.FileDetails.FileStoreId,
                         UploadDateTime = request.FileDetails.UploadDateTime,
-                        MetaDataDictionary = request.FileDetails.MetaDataDictionary,
+                        MetaDataDictionary = (request.FileDetails.MetaDataDictionary != null) ? request.FileDetails.MetaDataDictionary : new Dictionary<String, List<string>>() { },
                     };
                 }
                 else
@@ -112,6 +115,68 @@ namespace ExpressBase.StaticFileServer.Services
                 Log.Info("Exception:" + e.ToString());
             }
 
+            return dfs;
+        }
+
+        [Authenticate]
+        public DownloadFileResponse Get(DownloadFileByRefIdRequest request)
+        {
+            byte[] fb = new byte[0];
+            DownloadFileResponse dfs = new DownloadFileResponse();
+
+            string sql = "SELECT filestore_id, filecategory FROM eb_files_ref WHERE id = @refid AND eb_del = 'F';";
+
+            EbDataTable dt = this.EbConnectionFactory.DataDB.DoQuery(sql, new DbParameter[] { this.EbConnectionFactory.DataDB.GetNewParameter("@refid", EbDbTypes.Int32, request.FileDetails.FileRefId) });
+
+            if (dt.Rows.Count != 0)
+            {
+                request.FileDetails.FileStoreId = (dt.Rows[0][0].ToString());
+                request.FileDetails.FileCategory = (EbFileCategory)Convert.ToInt32(dt.Rows[0][1].ToString());
+
+                string sFilePath = string.Format("../StaticFiles/{0}/{1}.{2}", request.TenantAccountId, request.FileDetails.FileStoreId, request.FileDetails.FileType);
+
+                MemoryStream ms = null;
+
+                try
+                {
+                    if (!System.IO.File.Exists(sFilePath))
+                    {
+                        fb = this.EbConnectionFactory.FilesDB.DownloadFileById(request.FileDetails.FileStoreId, request.FileDetails.FileCategory);
+
+                        if (fb != null)
+                        {
+                            EbFile.Bytea_ToFile(fb, sFilePath);
+                        }
+                    }
+
+                    if (File.Exists(sFilePath))
+                    {
+                        ms = new MemoryStream(File.ReadAllBytes(sFilePath));
+
+                        dfs.StreamWrapper = new MemorystreamWrapper(ms);
+                        dfs.FileDetails = new FileMeta
+                        {
+                            FileName = request.FileDetails.FileName,
+                            FileType = request.FileDetails.FileType,
+                            Length = request.FileDetails.Length,
+                            FileStoreId = request.FileDetails.FileStoreId,
+                            UploadDateTime = request.FileDetails.UploadDateTime,
+                            MetaDataDictionary = (request.FileDetails.MetaDataDictionary != null) ? request.FileDetails.MetaDataDictionary : new Dictionary<String, List<string>>() { },
+                        };
+                    }
+                    else
+                        throw new Exception("File Not Found");
+                }
+                catch (FormatException e)
+                {
+                    Console.WriteLine("ObjectId not in Correct Format: " + request.FileDetails.FileName);
+                    Console.WriteLine("Exception: " + e.ToString());
+                }
+                catch (Exception e)
+                {
+                    Log.Info("Exception:" + e.ToString());
+                }
+            }
             return dfs;
         }
 
@@ -150,7 +215,7 @@ namespace ExpressBase.StaticFileServer.Services
                         Length = request.ImageInfo.Length,
                         FileStoreId = request.ImageInfo.FileStoreId,
                         UploadDateTime = request.ImageInfo.UploadDateTime,
-                        MetaDataDictionary = request.ImageInfo.MetaDataDictionary,
+                        MetaDataDictionary = (request.ImageInfo.MetaDataDictionary != null) ? request.ImageInfo.MetaDataDictionary : new Dictionary<String, List<string>>() { },
                     };
                 }
                 else
@@ -204,7 +269,7 @@ namespace ExpressBase.StaticFileServer.Services
                         Length = request.ImageInfo.Length,
                         FileStoreId = request.ImageInfo.FileStoreId,
                         UploadDateTime = request.ImageInfo.UploadDateTime,
-                        MetaDataDictionary = request.ImageInfo.MetaDataDictionary,
+                        MetaDataDictionary = (request.ImageInfo.MetaDataDictionary != null) ? request.ImageInfo.MetaDataDictionary : new Dictionary<String, List<string>>() { },
                     };
                 }
                 else
