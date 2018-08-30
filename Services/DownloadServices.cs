@@ -6,6 +6,7 @@ using ExpressBase.Common.Enums;
 using ServiceStack;
 using System;
 using System.IO;
+using System.Linq;
 
 namespace ExpressBase.StaticFileServer.Services
 {
@@ -47,7 +48,7 @@ namespace ExpressBase.StaticFileServer.Services
                     dfs.FileDetails = new FileMeta
                     {
                         FileName = request.FileName,
-                        FileType = request.FileName.Split(CharConstants.DOT)[1]
+                        FileType = request.FileName.SplitOnLast(CharConstants.DOT).Last()
                     };
                 }
             }
@@ -63,7 +64,7 @@ namespace ExpressBase.StaticFileServer.Services
         {
             byte[] fb = new byte[0];
 
-            string sFilePath = string.Format("../StaticFiles/{0}/{1}", request.TenantAccountId, request.FileDetails.FileStoreId);
+            string sFilePath = string.Format("../StaticFiles/{0}/{1}.{2}", request.TenantAccountId, request.FileDetails.FileStoreId, request.FileDetails.FileType);
 
             MemoryStream ms = null;
 
@@ -119,7 +120,7 @@ namespace ExpressBase.StaticFileServer.Services
         {
             byte[] fb = new byte[0];
 
-            string sFilePath = string.Format("../StaticFiles/{0}/{1}", request.TenantAccountId, request.ImageInfo.FileStoreId);
+            string sFilePath = string.Format("../StaticFiles/{0}/{1}.{2}", request.TenantAccountId, request.ImageInfo.FileStoreId, request.ImageInfo.FileType);
 
             MemoryStream ms = null;
 
