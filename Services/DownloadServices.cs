@@ -67,7 +67,7 @@ namespace ExpressBase.StaticFileServer.Services
         {
             byte[] fb = new byte[0];
 
-            string sFilePath = string.Format("../StaticFiles/{0}/{1}.{2}", request.TenantAccountId, request.FileDetails.FileStoreId, request.FileDetails.FileType);
+            string sFilePath = string.Format("../StaticFiles/{0}/{1}.{2}", request.SolnId, request.FileDetails.FileStoreId, request.FileDetails.FileType);
 
             MemoryStream ms = null;
 
@@ -133,7 +133,7 @@ namespace ExpressBase.StaticFileServer.Services
                 request.FileDetails.FileStoreId = (dt.Rows[0][0].ToString());
                 request.FileDetails.FileCategory = (EbFileCategory)Convert.ToInt32(dt.Rows[0][1].ToString());
 
-                string sFilePath = string.Format("../StaticFiles/{0}/{1}.{2}", request.TenantAccountId, request.FileDetails.FileStoreId, request.FileDetails.FileType);
+                string sFilePath = string.Format("../StaticFiles/{0}/{1}.{2}", request.SolnId, request.FileDetails.FileStoreId, request.FileDetails.FileType);
 
                 MemoryStream ms = null;
 
@@ -185,7 +185,7 @@ namespace ExpressBase.StaticFileServer.Services
         {
             byte[] fb = new byte[0];
 
-            string sFilePath = string.Format("../StaticFiles/{0}/{1}.{2}", request.TenantAccountId, request.ImageInfo.FileStoreId, request.ImageInfo.FileType);
+            string sFilePath = string.Format("../StaticFiles/{0}/{1}.{2}", request.SolnId, request.ImageInfo.FileStoreId, request.ImageInfo.FileType);
 
             MemoryStream ms = null;
 
@@ -239,7 +239,7 @@ namespace ExpressBase.StaticFileServer.Services
         {
             byte[] fb = new byte[0];
 
-            string sFilePath = string.Format("../StaticFiles/{0}/{1}", request.TenantAccountId, request.ImageInfo.FileName);
+            string sFilePath = string.Format("../StaticFiles/{0}/{1}", request.SolnId, request.ImageInfo.FileName);
 
             MemoryStream ms = null;
 

@@ -22,7 +22,7 @@ namespace ExpressBase.StaticFileServer
                 {
                     FileDetails = request.FileDetails,
                     Byte = request.FileByte,
-                    TenantAccountId = request.TenantAccountId,
+                    SolnId = request.SolnId,
                     UserId = request.UserId,
                     UserAuthId = request.UserAuthId,
                     BToken = (!String.IsNullOrEmpty(this.Request.Authorization)) ? this.Request.Authorization.Replace("Bearer", string.Empty).Trim() : String.Empty,
@@ -50,7 +50,7 @@ namespace ExpressBase.StaticFileServer
                 {
                     ImageInfo = request.ImageInfo,
                     Byte = request.ImageByte,
-                    TenantAccountId = request.TenantAccountId,
+                    SolnId = request.SolnId,
                     UserId = request.UserId,
                     UserAuthId = request.UserAuthId,
                     BToken = (!String.IsNullOrEmpty(this.Request.Authorization)) ? this.Request.Authorization.Replace("Bearer", string.Empty).Trim() : String.Empty,
