@@ -15,6 +15,13 @@ namespace ExpressBase.StaticFileServer
         {
         }
 
+        private static readonly string IdFetchQuery =
+@"INSERT INTO
+    eb_files_ref (userid, filename, filetype, tags, filecategory) 
+VALUES 
+    (@userid, @filename, @filetype, @tags, @filecategory) 
+RETURNING id";
+
         [Authenticate]
         public UploadAsyncResponse Post(UploadFileAsyncRequest request)
         {
@@ -22,6 +29,7 @@ namespace ExpressBase.StaticFileServer
             try
             {
                 request.FileDetails.FileRefId = GetFileRefId(request.UserId, request.FileDetails.FileName, request.FileDetails.FileType, request.FileDetails.MetaDataDictionary.ToString(), request.FileDetails.FileCategory);
+
                 this.MessageProducer3.Publish(new UploadFileRequest()
                 {
                     FileRefId = request.FileDetails.FileRefId,
@@ -42,20 +50,12 @@ namespace ExpressBase.StaticFileServer
             return res;
         }
 
-        private static readonly string IdFetchQuery =
-@"INSERT INTO
-    eb_files_ref (userid, filename, filetype, tags, filecategory) 
-VALUES 
-    (@userid, @filename, @filetype, @tags, @filecategory) 
-RETURNING id";
-
         [Authenticate]
         public UploadAsyncResponse Post(UploadImageAsyncRequest request)
         {
             UploadAsyncResponse res = new UploadAsyncResponse();
 
             Log.Info("Inside ImageAsyncUpload");
-
             try
             {
                 UploadImageRequest req = new UploadImageRequest()
@@ -73,7 +73,6 @@ RETURNING id";
 
                 this.MessageProducer3.Publish(req);
                 res.FileRefId = req.ImageRefId;
-                
             }
             catch (Exception e)
             {

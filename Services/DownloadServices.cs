@@ -201,7 +201,7 @@ WHERE
         {
             byte[] fb = new byte[0];
 
-            string sFilePath = string.Format("../StaticFiles/{0}/{1}", request.SolnId, request.ImageInfo.FileRefId);
+            string sFilePath = string.Format("../StaticFiles/{0}/{1}/{2}", request.SolnId, request.ImageInfo.ImageQuality ,request.ImageInfo.FileRefId);
 
             MemoryStream ms = null;
 
