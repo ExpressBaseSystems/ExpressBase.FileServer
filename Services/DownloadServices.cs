@@ -15,59 +15,57 @@ namespace ExpressBase.StaticFileServer.Services
 {
     public class DownloadServices : BaseService
     {
-        public DownloadServices(IEbConnectionFactory _dbf) : base(_dbf)
-        {
-        }
+        public DownloadServices(IEbConnectionFactory _dbf) : base(_dbf) { }
 
-        public DownloadFileResponse Get(DownloadFileExtRequest request)
-        {
-            string sFilePath = string.Format("../StaticFiles/{0}/{1}", CoreConstants.EXPRESSBASE, request.FileName);
+        //public DownloadFileResponse Get(DownloadFileExtRequest request)
+        //{
+        //    string sFilePath = string.Format("../StaticFiles/{0}/{1}", CoreConstants.EXPRESSBASE, request.FileName);
 
-            byte[] fb = null;
+        //    byte[] fb = null;
 
-            DownloadFileResponse dfs = new DownloadFileResponse();
+        //    DownloadFileResponse dfs = new DownloadFileResponse();
 
-            MemoryStream ms = null;
-            try
-            {
-                if (!System.IO.File.Exists(sFilePath))
-                {
-                    EbFileCategory cat = EbFileCategory.External;
+        //    MemoryStream ms = null;
+        //    try
+        //    {
+        //        if (!System.IO.File.Exists(sFilePath))
+        //        {
+        //            EbFileCategory cat = EbFileCategory.External;
 
-                    if (request.FileName.StartsWith(StaticFileConstants.LOGO))
-                    {
-                        cat = EbFileCategory.SolLogo;
-                    }
+        //            if (request.FileName.StartsWith(StaticFileConstants.LOGO))
+        //            {
+        //                cat = EbFileCategory.SolLogo;
+        //            }
 
-                    fb = InfraConnectionFactory.FilesDB.DownloadFileByName(request.FileName, cat);
-                    if (fb != null)
-                        EbFile.Bytea_ToFile(fb, sFilePath);
-                }
-                if (File.Exists(sFilePath))
-                {
-                    ms = new MemoryStream(File.ReadAllBytes(sFilePath)); // Use a dummy for every use
+        //            fb = InfraConnectionFactory.FilesDB.DownloadFileByName(request.FileName, cat);
+        //            if (fb != null)
+        //                EbFile.Bytea_ToFile(fb, sFilePath);
+        //        }
+        //        if (File.Exists(sFilePath))
+        //        {
+        //            ms = new MemoryStream(File.ReadAllBytes(sFilePath)); // Use a dummy for every use
 
-                    dfs.StreamWrapper = new MemorystreamWrapper(ms);
-                    dfs.FileDetails = new FileMeta
-                    {
-                        FileName = request.FileName,
-                        FileType = request.FileName.SplitOnLast(CharConstants.DOT).Last()
-                    };
-                }
-            }
-            catch (Exception e)
-            {
-                Log.Info("Exception:" + e.ToString());
-            }
-            return dfs;
-        }
+        //            dfs.StreamWrapper = new MemorystreamWrapper(ms);
+        //            dfs.FileDetails = new FileMeta
+        //            {
+        //                FileName = request.FileName,
+        //                FileType = request.FileName.SplitOnLast(CharConstants.DOT).Last()
+        //            };
+        //        }
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        Log.Info("Exception:" + e.ToString());
+        //    }
+        //    return dfs;
+        //}
 
         [Authenticate]
         public DownloadFileResponse Get(DownloadFileByIdRequest request)
         {
             byte[] fb = new byte[0];
 
-            string sFilePath = string.Format("../StaticFiles/{0}/{1}.{2}", request.SolnId, request.FileDetails.FileStoreId, request.FileDetails.FileType);
+            string sFilePath = string.Format("../StaticFiles/{0}/{1}", request.SolnId, request.FileDetails.FileRefId);
 
             MemoryStream ms = null;
 
@@ -78,6 +76,24 @@ namespace ExpressBase.StaticFileServer.Services
                 if (!System.IO.File.Exists(sFilePath))
                 {
                     EbFileCategory category = request.FileDetails.FileCategory;
+
+                    string Qry = @"
+SELECT 
+    B.filestore_sid 
+FROM 
+    eb_files_ref A, eb_files_ref_variations B
+WHERE 
+    A.id=B.eb_files_ref_id AND A.id=:fileref;";
+
+
+                    DbParameter[] parameters =
+                    {
+                        this.EbConnectionFactory.DataDB.GetNewParameter("fileref", EbDbTypes.Int32, request.FileDetails.FileRefId),
+                    };
+
+                    var t = this.EbConnectionFactory.DataDB.DoQuery(Qry, parameters);
+                    request.FileDetails.FileStoreId = t.Rows[0][0].ToString();
+
 
                     fb = this.EbConnectionFactory.FilesDB.DownloadFileById(request.FileDetails.FileStoreId, category);
 
@@ -118,74 +134,74 @@ namespace ExpressBase.StaticFileServer.Services
             return dfs;
         }
 
-        [Authenticate]
-        public DownloadFileResponse Get(DownloadFileByRefIdRequest request)
-        {
-            byte[] fb = new byte[0];
-            DownloadFileResponse dfs = new DownloadFileResponse();
+        //[Authenticate]
+        //public DownloadFileResponse Get(DownloadFileByRefIdRequest request)
+        //{
+        //    byte[] fb = new byte[0];
+        //    DownloadFileResponse dfs = new DownloadFileResponse();
 
-            string sql = "SELECT filestore_id, filecategory FROM eb_files_ref WHERE id = @refid AND eb_del = 'F';";
+        //    string sql = "SELECT filestore_id, filecategory FROM eb_files_ref WHERE id = @refid AND eb_del = 'F';";
 
-            EbDataTable dt = this.EbConnectionFactory.DataDB.DoQuery(sql, new DbParameter[] { this.EbConnectionFactory.DataDB.GetNewParameter("@refid", EbDbTypes.Int32, request.FileDetails.FileRefId) });
+        //    EbDataTable dt = this.EbConnectionFactory.DataDB.DoQuery(sql, new DbParameter[] { this.EbConnectionFactory.DataDB.GetNewParameter("@refid", EbDbTypes.Int32, request.FileDetails.FileRefId) });
 
-            if (dt.Rows.Count != 0)
-            {
-                request.FileDetails.FileStoreId = (dt.Rows[0][0].ToString());
-                request.FileDetails.FileCategory = (EbFileCategory)Convert.ToInt32(dt.Rows[0][1].ToString());
+        //    if (dt.Rows.Count != 0)
+        //    {
+        //        request.FileDetails.FileStoreId = (dt.Rows[0][0].ToString());
+        //        request.FileDetails.FileCategory = (EbFileCategory)Convert.ToInt32(dt.Rows[0][1].ToString());
 
-                string sFilePath = string.Format("../StaticFiles/{0}/{1}.{2}", request.SolnId, request.FileDetails.FileStoreId, request.FileDetails.FileType);
+        //        string sFilePath = string.Format("../StaticFiles/{0}/{1}.{2}", request.SolnId, request.FileDetails.FileStoreId, request.FileDetails.FileType);
 
-                MemoryStream ms = null;
+        //        MemoryStream ms = null;
 
-                try
-                {
-                    if (!System.IO.File.Exists(sFilePath))
-                    {
-                        fb = this.EbConnectionFactory.FilesDB.DownloadFileById(request.FileDetails.FileStoreId, request.FileDetails.FileCategory);
+        //        try
+        //        {
+        //            if (!System.IO.File.Exists(sFilePath))
+        //            {
+        //                fb = this.EbConnectionFactory.FilesDB.DownloadFileById(request.FileDetails.FileStoreId, request.FileDetails.FileCategory);
 
-                        if (fb != null)
-                        {
-                            EbFile.Bytea_ToFile(fb, sFilePath);
-                        }
-                    }
+        //                if (fb != null)
+        //                {
+        //                    EbFile.Bytea_ToFile(fb, sFilePath);
+        //                }
+        //            }
 
-                    if (File.Exists(sFilePath))
-                    {
-                        ms = new MemoryStream(File.ReadAllBytes(sFilePath));
+        //            if (File.Exists(sFilePath))
+        //            {
+        //                ms = new MemoryStream(File.ReadAllBytes(sFilePath));
 
-                        dfs.StreamWrapper = new MemorystreamWrapper(ms);
-                        dfs.FileDetails = new FileMeta
-                        {
-                            FileName = request.FileDetails.FileName,
-                            FileType = request.FileDetails.FileType,
-                            Length = request.FileDetails.Length,
-                            FileStoreId = request.FileDetails.FileStoreId,
-                            UploadDateTime = request.FileDetails.UploadDateTime,
-                            MetaDataDictionary = (request.FileDetails.MetaDataDictionary != null) ? request.FileDetails.MetaDataDictionary : new Dictionary<String, List<string>>() { },
-                        };
-                    }
-                    else
-                        throw new Exception("File Not Found");
-                }
-                catch (FormatException e)
-                {
-                    Console.WriteLine("ObjectId not in Correct Format: " + request.FileDetails.FileName);
-                    Console.WriteLine("Exception: " + e.ToString());
-                }
-                catch (Exception e)
-                {
-                    Log.Info("Exception:" + e.ToString());
-                }
-            }
-            return dfs;
-        }
+        //                dfs.StreamWrapper = new MemorystreamWrapper(ms);
+        //                dfs.FileDetails = new FileMeta
+        //                {
+        //                    FileName = request.FileDetails.FileName,
+        //                    FileType = request.FileDetails.FileType,
+        //                    Length = request.FileDetails.Length,
+        //                    FileStoreId = request.FileDetails.FileStoreId,
+        //                    UploadDateTime = request.FileDetails.UploadDateTime,
+        //                    MetaDataDictionary = (request.FileDetails.MetaDataDictionary != null) ? request.FileDetails.MetaDataDictionary : new Dictionary<String, List<string>>() { },
+        //                };
+        //            }
+        //            else
+        //                throw new Exception("File Not Found");
+        //        }
+        //        catch (FormatException e)
+        //        {
+        //            Console.WriteLine("ObjectId not in Correct Format: " + request.FileDetails.FileName);
+        //            Console.WriteLine("Exception: " + e.ToString());
+        //        }
+        //        catch (Exception e)
+        //        {
+        //            Log.Info("Exception:" + e.ToString());
+        //        }
+        //    }
+        //    return dfs;
+        //}
 
         [Authenticate]
         public DownloadFileResponse Get(DownloadImageByIdRequest request)
         {
             byte[] fb = new byte[0];
 
-            string sFilePath = string.Format("../StaticFiles/{0}/{1}.{2}", request.SolnId, request.ImageInfo.FileStoreId, request.ImageInfo.FileType);
+            string sFilePath = string.Format("../StaticFiles/{0}/{1}", request.SolnId, request.ImageInfo.FileRefId);
 
             MemoryStream ms = null;
 
@@ -196,6 +212,25 @@ namespace ExpressBase.StaticFileServer.Services
                 if (!System.IO.File.Exists(sFilePath))
                 {
                     EbFileCategory category = request.ImageInfo.FileCategory;
+
+                    string Qry = @"
+SELECT 
+    B.filestore_sid 
+FROM 
+    eb_files_ref A, eb_files_ref_variations B
+WHERE 
+    A.id=B.eb_files_ref_id AND A.id=:fileref
+    AND B.imagequality_id = :imagequality;";
+
+
+                    DbParameter[] parameters =
+                    {
+                        this.EbConnectionFactory.DataDB.GetNewParameter("fileref", EbDbTypes.Int32, request.ImageInfo.FileRefId),
+                        this.EbConnectionFactory.DataDB.GetNewParameter("imagequality", EbDbTypes.Int32, request.ImageInfo.ImageQuality)
+                    };
+
+                    var t = this.EbConnectionFactory.DataDB.DoQuery(Qry, parameters);
+                    request.ImageInfo.FileStoreId = t.Rows[0][0].ToString();
 
                     fb = this.EbConnectionFactory.FilesDB.DownloadFileById(request.ImageInfo.FileStoreId, category);
 
@@ -234,58 +269,78 @@ namespace ExpressBase.StaticFileServer.Services
             return dfs;
         }
 
-        [Authenticate]
-        public DownloadFileResponse Get(DownloadImageByNameRequest request)
-        {
-            byte[] fb = new byte[0];
+//        [Authenticate]
+//        public DownloadFileResponse Get(DownloadImageByNameRequest request)
+//        {
+//            byte[] fb = new byte[0];
 
-            string sFilePath = string.Format("../StaticFiles/{0}/{1}", request.SolnId, request.ImageInfo.FileName);
+//            string sFilePath = string.Format("../StaticFiles/{0}/{1}", request.SolnId, request.ImageInfo.FileName);
 
-            MemoryStream ms = null;
+//            MemoryStream ms = null;
 
-            DownloadFileResponse dfs = new DownloadFileResponse();
+//            DownloadFileResponse dfs = new DownloadFileResponse();
 
-            try
-            {
-                if (!System.IO.File.Exists(sFilePath))
-                {
-                    EbFileCategory category = request.ImageInfo.FileCategory;
+//            try
+//            {
+//                if (!System.IO.File.Exists(sFilePath))
+//                {
+//                    EbFileCategory category = request.ImageInfo.FileCategory;
 
-                    fb = this.EbConnectionFactory.FilesDB.DownloadFileByName(request.ImageInfo.FileName, category);
+//                    string Qry = @"
+//SELECT 
+//    B.filestore_sid 
+//FROM 
+//    eb_files_ref A, eb_files_ref_variations B
+//WHERE 
+//    A.id=B.eb_files_ref_id AND A.id=:fileref
+//    AND B.imagequality_id = :imagequality;";
 
-                    if (fb != null)
-                        EbFile.Bytea_ToFile(fb, sFilePath);
-                }
+//                    DbParameter[] parameters =
+//                    {
+//                        this.EbConnectionFactory.DataDB.GetNewParameter("fileref", EbDbTypes.Int32, request.ImageInfo.FileRefId),
+//                        this.EbConnectionFactory.DataDB.GetNewParameter("imagequality", EbDbTypes.Int32, request.ImageInfo.ImageQuality)
+//                    };
 
-                if (File.Exists(sFilePath))
-                {
-                    ms = new MemoryStream(File.ReadAllBytes(sFilePath));
+//                    var t = this.EbConnectionFactory.DataDB.DoQuery(Qry, parameters);
+//                    request.ImageInfo.FileStoreId = t.Rows[0][0].ToString();
 
-                    dfs.StreamWrapper = new MemorystreamWrapper(ms);
-                    dfs.FileDetails = new FileMeta
-                    {
-                        FileName = request.ImageInfo.FileName,
-                        FileType = request.ImageInfo.FileType,
-                        Length = request.ImageInfo.Length,
-                        FileStoreId = request.ImageInfo.FileStoreId,
-                        UploadDateTime = request.ImageInfo.UploadDateTime,
-                        MetaDataDictionary = (request.ImageInfo.MetaDataDictionary != null) ? request.ImageInfo.MetaDataDictionary : new Dictionary<String, List<string>>() { },
-                    };
-                }
-                else
-                    throw new Exception("File Not Found");
-            }
-            catch (FormatException e)
-            {
-                Console.WriteLine("ObjectId not in Correct Format: " + request.ImageInfo.FileName);
-                Console.WriteLine("Exception: " + e.ToString());
-            }
-            catch (Exception e)
-            {
-                Log.Info("Exception:" + e.ToString());
-            }
 
-            return dfs;
-        }
+//                    fb = this.EbConnectionFactory.FilesDB.DownloadFileById(request.ImageInfo.FileStoreId, category);
+
+//                    if (fb != null)
+//                        EbFile.Bytea_ToFile(fb, sFilePath);
+//                }
+
+//                if (File.Exists(sFilePath))
+//                {
+//                    ms = new MemoryStream(File.ReadAllBytes(sFilePath));
+
+//                    dfs.StreamWrapper = new MemorystreamWrapper(ms);
+//                    dfs.FileDetails = new FileMeta
+//                    {
+//                        FileName = request.ImageInfo.FileName,
+//                        FileType = request.ImageInfo.FileType,
+//                        Length = request.ImageInfo.Length,
+//                        FileStoreId = request.ImageInfo.FileStoreId,
+//                        UploadDateTime = request.ImageInfo.UploadDateTime,
+//                        MetaDataDictionary = (request.ImageInfo.MetaDataDictionary != null) ? request.ImageInfo.MetaDataDictionary : new Dictionary<String, List<string>>() { },
+//                    };
+//                }
+//                else
+//                    throw new Exception("File Not Found");
+//            }
+//            catch (FormatException e)
+//            {
+//                Console.WriteLine("ObjectId not in Correct Format: " + request.ImageInfo.FileName);
+//                Console.WriteLine("Exception: " + e.ToString());
+//            }
+//            catch (Exception e)
+//            {
+//                Log.Info("Exception:" + e.ToString());
+//            }
+
+//            return dfs;
+//        }
+
     }
 }

@@ -1,8 +1,11 @@
 ﻿using ExpressBase.Common.Data;
 using ExpressBase.Common.EbServiceStack.ReqNRes;
+using ExpressBase.Common.Enums;
+using ExpressBase.Common.Structures;
 using ServiceStack;
 using ServiceStack.Messaging;
 using System;
+using System.Data.Common;
 
 namespace ExpressBase.StaticFileServer
 {
@@ -18,9 +21,10 @@ namespace ExpressBase.StaticFileServer
             UploadAsyncResponse res = new UploadAsyncResponse();
             try
             {
+                request.FileDetails.FileRefId = GetFileRefId(request.UserId, request.FileDetails.FileName, request.FileDetails.FileType, request.FileDetails.MetaDataDictionary.ToString(), request.FileDetails.FileCategory);
                 this.MessageProducer3.Publish(new UploadFileRequest()
                 {
-                    FileDetails = request.FileDetails,
+                    FileRefId = request.FileDetails.FileRefId,
                     Byte = request.FileByte,
                     SolnId = request.SolnId,
                     UserId = request.UserId,
@@ -28,6 +32,7 @@ namespace ExpressBase.StaticFileServer
                     BToken = (!String.IsNullOrEmpty(this.Request.Authorization)) ? this.Request.Authorization.Replace("Bearer", string.Empty).Trim() : String.Empty,
                     RToken = (!String.IsNullOrEmpty(this.Request.Headers["rToken"])) ? this.Request.Headers["rToken"] : String.Empty
                 });
+                res.FileRefId = request.FileDetails.FileRefId;
             }
             catch (Exception e)
             {
@@ -36,6 +41,13 @@ namespace ExpressBase.StaticFileServer
             }
             return res;
         }
+
+        private static readonly string IdFetchQuery =
+@"INSERT INTO
+    eb_files_ref (userid, filename, filetype, tags, filecategory) 
+VALUES 
+    (@userid, @filename, @filetype, @tags, @filecategory) 
+RETURNING id";
 
         [Authenticate]
         public UploadAsyncResponse Post(UploadImageAsyncRequest request)
@@ -48,8 +60,8 @@ namespace ExpressBase.StaticFileServer
             {
                 UploadImageRequest req = new UploadImageRequest()
                 {
-                    ImageInfo = request.ImageInfo,
                     Byte = request.ImageByte,
+                    FileCategory = request.ImageInfo.FileCategory,
                     SolnId = request.SolnId,
                     UserId = request.UserId,
                     UserAuthId = request.UserAuthId,
@@ -57,19 +69,42 @@ namespace ExpressBase.StaticFileServer
                     RToken = (!String.IsNullOrEmpty(this.Request.Headers["rToken"])) ? this.Request.Headers["rToken"] : String.Empty
                 };
 
-                req.ImageInfo.FileRefId = UploadImageRequest.GetFileRefId(EbConnectionFactory.DataDB, request.UserId, req.ImageInfo.FileName, req.ImageInfo.FileType, req.ImageInfo.MetaDataDictionary.ToJson(), req.ImageInfo.FileCategory);
+                req.ImageRefId = GetFileRefId(request.UserId, request.ImageInfo.FileName, request.ImageInfo.FileType, request.ImageInfo.MetaDataDictionary.ToJson(), request.ImageInfo.FileCategory);
 
                 this.MessageProducer3.Publish(req);
-                res.ImgRefId = req.ImageInfo.FileRefId;
+                res.FileRefId = req.ImageRefId;
                 
             }
             catch (Exception e)
             {
                 Log.Info("Exception:" + e.ToString());
-                res.ImgRefId = 0;
+                res.FileRefId = 0;
                 res.ResponseStatus.Message = e.Message;
             }
             return res;
+        }
+
+        private int GetFileRefId(int userId, string filename, string filetype, string tags, EbFileCategory ebFileCategory)
+        {
+            int refId = 0;
+            try
+            {
+                DbParameter[] parameters =
+                {
+                        this.EbConnectionFactory.DataDB.GetNewParameter("userid", EbDbTypes.Int32, userId),
+                        this.EbConnectionFactory.DataDB.GetNewParameter("filename", EbDbTypes.String, filename),
+                        this.EbConnectionFactory.DataDB.GetNewParameter("filetype", EbDbTypes.String, filetype),
+                        this.EbConnectionFactory.DataDB.GetNewParameter("tags", EbDbTypes.String, tags),
+                        this.EbConnectionFactory.DataDB.GetNewParameter("filecategory", EbDbTypes.Int16, ebFileCategory)
+            };
+                var table = this.EbConnectionFactory.DataDB.DoQuery(IdFetchQuery, parameters);
+                refId = (int)table.Rows[0][0];
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("ERROR: POSGRE: " + e.Message);
+            }
+            return refId;
         }
     }
 }
