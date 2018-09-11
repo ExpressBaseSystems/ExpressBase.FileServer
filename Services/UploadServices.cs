@@ -46,7 +46,7 @@ namespace ExpressBase.StaticFileServer
 
             try
             {
-                this.MessageProducer3.Publish(new UploadImageRequest()
+                UploadImageRequest req = new UploadImageRequest()
                 {
                     ImageInfo = request.ImageInfo,
                     Byte = request.ImageByte,
@@ -55,11 +55,18 @@ namespace ExpressBase.StaticFileServer
                     UserAuthId = request.UserAuthId,
                     BToken = (!String.IsNullOrEmpty(this.Request.Authorization)) ? this.Request.Authorization.Replace("Bearer", string.Empty).Trim() : String.Empty,
                     RToken = (!String.IsNullOrEmpty(this.Request.Headers["rToken"])) ? this.Request.Headers["rToken"] : String.Empty
-                });
+                };
+
+                req.ImageInfo.FileRefId = UploadImageRequest.GetFileRefId(EbConnectionFactory.DataDB, request.UserId, req.ImageInfo.FileName, req.ImageInfo.FileType, req.ImageInfo.MetaDataDictionary.ToJson(), req.ImageInfo.FileCategory);
+
+                this.MessageProducer3.Publish(req);
+                res.ImgRefId = req.ImageInfo.FileRefId;
+                
             }
             catch (Exception e)
             {
                 Log.Info("Exception:" + e.ToString());
+                res.ImgRefId = 0;
                 res.ResponseStatus.Message = e.Message;
             }
             return res;
