@@ -93,7 +93,7 @@ RETURNING id";
                         this.EbConnectionFactory.DataDB.GetNewParameter("userid", EbDbTypes.Int32, userId),
                         this.EbConnectionFactory.DataDB.GetNewParameter("filename", EbDbTypes.String, filename),
                         this.EbConnectionFactory.DataDB.GetNewParameter("filetype", EbDbTypes.String, filetype),
-                        this.EbConnectionFactory.DataDB.GetNewParameter("tags", EbDbTypes.String, tags),
+                        this.EbConnectionFactory.DataDB.GetNewParameter("tags", EbDbTypes.String, string.IsNullOrEmpty(tags)? string.Empty: tags),
                         this.EbConnectionFactory.DataDB.GetNewParameter("filecategory", EbDbTypes.Int16, ebFileCategory)
             };
                 var table = this.EbConnectionFactory.DataDB.DoQuery(IdFetchQuery, parameters);
