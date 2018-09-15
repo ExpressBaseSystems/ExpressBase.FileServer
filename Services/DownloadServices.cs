@@ -215,23 +215,39 @@ WHERE
 
                     string Qry = @"
 SELECT 
-    B.filestore_sid 
+     B.imagequality_id, B.filestore_sid
 FROM 
     eb_files_ref A, eb_files_ref_variations B
 WHERE 
     A.id=B.eb_files_ref_id AND A.id=:fileref
-    AND B.imagequality_id = :imagequality;";
+ORDER BY B.imagequality_id;";
 
 
                     DbParameter[] parameters =
                     {
-                        this.EbConnectionFactory.DataDB.GetNewParameter("fileref", EbDbTypes.Int32, request.ImageInfo.FileRefId),
-                        this.EbConnectionFactory.DataDB.GetNewParameter("imagequality", EbDbTypes.Int32, request.ImageInfo.ImageQuality)
+                        this.EbConnectionFactory.DataDB.GetNewParameter("fileref", EbDbTypes.Int32, request.ImageInfo.FileRefId)
                     };
 
                     var t = this.EbConnectionFactory.DataDB.DoQuery(Qry, parameters);
-                    request.ImageInfo.FileStoreId = t.Rows[0][0].ToString();
 
+					if(t.Rows.Count == 0)
+					{
+						throw new Exception("filestore_sid not found - FileRefId:" + request.ImageInfo.FileRefId + " Quality:" + request.ImageInfo.ImageQuality);
+					}
+					Dictionary<int, string> sidAll = new Dictionary<int, string>();
+					for(int i = 0; i < t.Rows.Count; i++)
+					{
+						sidAll.Add(Convert.ToInt32(t.Rows[i][0]), t.Rows[i][1].ToString());
+					}
+					if (sidAll.ContainsKey((int)request.ImageInfo.ImageQuality))
+					{
+						request.ImageInfo.FileStoreId = sidAll[(int)request.ImageInfo.ImageQuality];
+					}
+					else
+					{
+						request.ImageInfo.FileStoreId = sidAll[(int)ImageQuality.original];
+					}
+                    
                     fb = this.EbConnectionFactory.FilesDB.DownloadFileById(request.ImageInfo.FileStoreId, category);
 
                     if (fb != null)
