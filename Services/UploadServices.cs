@@ -54,20 +54,23 @@ RETURNING id";
         public UploadAsyncResponse Post(UploadImageAsyncRequest request)
         {
             UploadAsyncResponse res = new UploadAsyncResponse();
-
             Log.Info("Inside ImageAsyncUpload");
+            dynamic req = null;
+
+            if (request.ImageInfo.FileCategory == EbFileCategory.Dp)
+                req = new UploadDpRequest();
+            else if (request.ImageInfo.FileCategory == EbFileCategory.Images)
+                req = new UploadImageRequest();
+
             try
             {
-                UploadImageRequest req = new UploadImageRequest()
-                {
-                    Byte = request.ImageByte,
-                    FileCategory = request.ImageInfo.FileCategory,
-                    SolnId = request.SolnId,
-                    UserId = request.UserId,
-                    UserAuthId = request.UserAuthId,
-                    BToken = (!String.IsNullOrEmpty(this.Request.Authorization)) ? this.Request.Authorization.Replace("Bearer", string.Empty).Trim() : String.Empty,
-                    RToken = (!String.IsNullOrEmpty(this.Request.Headers["rToken"])) ? this.Request.Headers["rToken"] : String.Empty
-                };
+                req.Byte = request.ImageByte;
+                req.FileCategory = request.ImageInfo.FileCategory;
+                req.SolnId = request.SolnId;
+                req.UserId = request.UserId;
+                req.UserAuthId = request.UserAuthId;
+                req.BToken = (!String.IsNullOrEmpty(this.Request.Authorization)) ? this.Request.Authorization.Replace("Bearer", string.Empty).Trim() : String.Empty;
+                req.RToken = (!String.IsNullOrEmpty(this.Request.Headers["rToken"])) ? this.Request.Headers["rToken"] : String.Empty;
 
                 req.ImageRefId = GetFileRefId(request.UserId, request.ImageInfo.FileName, request.ImageInfo.FileType, request.ImageInfo.MetaDataDictionary.ToJson(), request.ImageInfo.FileCategory);
 
