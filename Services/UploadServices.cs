@@ -55,7 +55,7 @@ RETURNING id";
         {
             UploadAsyncResponse res = new UploadAsyncResponse();
             Log.Info("Inside ImageAsyncUpload");
-            dynamic req = null;
+            IUploadImageRequest req = null;
 
             if (request.ImageInfo.FileCategory == EbFileCategory.Dp)
                 req = new UploadDpRequest();

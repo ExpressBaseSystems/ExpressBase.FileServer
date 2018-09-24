@@ -201,7 +201,7 @@ WHERE
         {
             byte[] fb = new byte[0];
 
-            string sFilePath = string.Format("../StaticFiles/{0}/{1}/{2}", request.SolnId, request.ImageInfo.ImageQuality ,request.ImageInfo.FileRefId);
+            string sFilePath = string.Format("../StaticFiles/{0}/{1}/{2}", request.SolnId, request.ImageInfo.ImageQuality, request.ImageInfo.FileRefId);
 
             MemoryStream ms = null;
 
@@ -230,24 +230,24 @@ ORDER BY B.imagequality_id;";
 
                     var t = this.EbConnectionFactory.DataDB.DoQuery(Qry, parameters);
 
-					if(t.Rows.Count == 0)
-					{
-						throw new Exception("filestore_sid not found - FileRefId:" + request.ImageInfo.FileRefId + " Quality:" + request.ImageInfo.ImageQuality);
-					}
-					Dictionary<int, string> sidAll = new Dictionary<int, string>();
-					for(int i = 0; i < t.Rows.Count; i++)
-					{
-						sidAll.Add(Convert.ToInt32(t.Rows[i][0]), t.Rows[i][1].ToString());
-					}
-					if (sidAll.ContainsKey((int)request.ImageInfo.ImageQuality))
-					{
-						request.ImageInfo.FileStoreId = sidAll[(int)request.ImageInfo.ImageQuality];
-					}
-					else
-					{
-						request.ImageInfo.FileStoreId = sidAll[(int)ImageQuality.original];
-					}
-                    
+                    if (t.Rows.Count == 0)
+                    {
+                        throw new Exception("filestore_sid not found - FileRefId:" + request.ImageInfo.FileRefId + " Quality:" + request.ImageInfo.ImageQuality);
+                    }
+                    Dictionary<int, string> sidAll = new Dictionary<int, string>();
+                    for (int i = 0; i < t.Rows.Count; i++)
+                    {
+                        sidAll.Add(Convert.ToInt32(t.Rows[i][0]), t.Rows[i][1].ToString());
+                    }
+                    if (sidAll.ContainsKey((int)request.ImageInfo.ImageQuality))
+                    {
+                        request.ImageInfo.FileStoreId = sidAll[(int)request.ImageInfo.ImageQuality];
+                    }
+                    else
+                    {
+                        request.ImageInfo.FileStoreId = sidAll[(int)ImageQuality.original];
+                    }
+
                     fb = this.EbConnectionFactory.FilesDB.DownloadFileById(request.ImageInfo.FileStoreId, category);
 
                     if (fb != null)
@@ -285,78 +285,136 @@ ORDER BY B.imagequality_id;";
             return dfs;
         }
 
-//        [Authenticate]
-//        public DownloadFileResponse Get(DownloadImageByNameRequest request)
-//        {
-//            byte[] fb = new byte[0];
+        //        [Authenticate]
+        //        public DownloadFileResponse Get(DownloadImageByNameRequest request)
+        //        {
+        //            byte[] fb = new byte[0];
 
-//            string sFilePath = string.Format("../StaticFiles/{0}/{1}", request.SolnId, request.ImageInfo.FileName);
+        //            string sFilePath = string.Format("../StaticFiles/{0}/{1}", request.SolnId, request.ImageInfo.FileName);
 
-//            MemoryStream ms = null;
+        //            MemoryStream ms = null;
 
-//            DownloadFileResponse dfs = new DownloadFileResponse();
+        //            DownloadFileResponse dfs = new DownloadFileResponse();
 
-//            try
-//            {
-//                if (!System.IO.File.Exists(sFilePath))
-//                {
-//                    EbFileCategory category = request.ImageInfo.FileCategory;
+        //            try
+        //            {
+        //                if (!System.IO.File.Exists(sFilePath))
+        //                {
+        //                    EbFileCategory category = request.ImageInfo.FileCategory;
 
-//                    string Qry = @"
-//SELECT 
-//    B.filestore_sid 
-//FROM 
-//    eb_files_ref A, eb_files_ref_variations B
-//WHERE 
-//    A.id=B.eb_files_ref_id AND A.id=:fileref
-//    AND B.imagequality_id = :imagequality;";
+        //                    string Qry = @"
+        //SELECT 
+        //    B.filestore_sid 
+        //FROM 
+        //    eb_files_ref A, eb_files_ref_variations B
+        //WHERE 
+        //    A.id=B.eb_files_ref_id AND A.id=:fileref
+        //    AND B.imagequality_id = :imagequality;";
 
-//                    DbParameter[] parameters =
-//                    {
-//                        this.EbConnectionFactory.DataDB.GetNewParameter("fileref", EbDbTypes.Int32, request.ImageInfo.FileRefId),
-//                        this.EbConnectionFactory.DataDB.GetNewParameter("imagequality", EbDbTypes.Int32, request.ImageInfo.ImageQuality)
-//                    };
+        //                    DbParameter[] parameters =
+        //                    {
+        //                        this.EbConnectionFactory.DataDB.GetNewParameter("fileref", EbDbTypes.Int32, request.ImageInfo.FileRefId),
+        //                        this.EbConnectionFactory.DataDB.GetNewParameter("imagequality", EbDbTypes.Int32, request.ImageInfo.ImageQuality)
+        //                    };
 
-//                    var t = this.EbConnectionFactory.DataDB.DoQuery(Qry, parameters);
-//                    request.ImageInfo.FileStoreId = t.Rows[0][0].ToString();
+        //                    var t = this.EbConnectionFactory.DataDB.DoQuery(Qry, parameters);
+        //                    request.ImageInfo.FileStoreId = t.Rows[0][0].ToString();
 
 
-//                    fb = this.EbConnectionFactory.FilesDB.DownloadFileById(request.ImageInfo.FileStoreId, category);
+        //                    fb = this.EbConnectionFactory.FilesDB.DownloadFileById(request.ImageInfo.FileStoreId, category);
 
-//                    if (fb != null)
-//                        EbFile.Bytea_ToFile(fb, sFilePath);
-//                }
+        //                    if (fb != null)
+        //                        EbFile.Bytea_ToFile(fb, sFilePath);
+        //                }
 
-//                if (File.Exists(sFilePath))
-//                {
-//                    ms = new MemoryStream(File.ReadAllBytes(sFilePath));
+        //                if (File.Exists(sFilePath))
+        //                {
+        //                    ms = new MemoryStream(File.ReadAllBytes(sFilePath));
 
-//                    dfs.StreamWrapper = new MemorystreamWrapper(ms);
-//                    dfs.FileDetails = new FileMeta
-//                    {
-//                        FileName = request.ImageInfo.FileName,
-//                        FileType = request.ImageInfo.FileType,
-//                        Length = request.ImageInfo.Length,
-//                        FileStoreId = request.ImageInfo.FileStoreId,
-//                        UploadDateTime = request.ImageInfo.UploadDateTime,
-//                        MetaDataDictionary = (request.ImageInfo.MetaDataDictionary != null) ? request.ImageInfo.MetaDataDictionary : new Dictionary<String, List<string>>() { },
-//                    };
-//                }
-//                else
-//                    throw new Exception("File Not Found");
-//            }
-//            catch (FormatException e)
-//            {
-//                Console.WriteLine("ObjectId not in Correct Format: " + request.ImageInfo.FileName);
-//                Console.WriteLine("Exception: " + e.ToString());
-//            }
-//            catch (Exception e)
-//            {
-//                Log.Info("Exception:" + e.ToString());
-//            }
+        //                    dfs.StreamWrapper = new MemorystreamWrapper(ms);
+        //                    dfs.FileDetails = new FileMeta
+        //                    {
+        //                        FileName = request.ImageInfo.FileName,
+        //                        FileType = request.ImageInfo.FileType,
+        //                        Length = request.ImageInfo.Length,
+        //                        FileStoreId = request.ImageInfo.FileStoreId,
+        //                        UploadDateTime = request.ImageInfo.UploadDateTime,
+        //                        MetaDataDictionary = (request.ImageInfo.MetaDataDictionary != null) ? request.ImageInfo.MetaDataDictionary : new Dictionary<String, List<string>>() { },
+        //                    };
+        //                }
+        //                else
+        //                    throw new Exception("File Not Found");
+        //            }
+        //            catch (FormatException e)
+        //            {
+        //                Console.WriteLine("ObjectId not in Correct Format: " + request.ImageInfo.FileName);
+        //                Console.WriteLine("Exception: " + e.ToString());
+        //            }
+        //            catch (Exception e)
+        //            {
+        //                Log.Info("Exception:" + e.ToString());
+        //            }
 
-//            return dfs;
-//        }
+        //            return dfs;
+        //        }
 
+        [Authenticate]
+        public DownloadFileResponse Get(DownloadDpRequest request)
+        {
+            DownloadFileResponse dfs = new DownloadFileResponse();
+            MemoryStream ms = null;
+            byte[] fb = new byte[0];
+            string sFilePath = string.Format("../StaticFiles/{0}/dp/{1}", request.SolnId, request.UserId);
+
+            try
+            {
+                if (!System.IO.File.Exists(sFilePath))
+                {
+                    string qry_refId = @"SELECT 
+                                    filestore_sid 
+                                FROM 
+                                    eb_files_ref_variations V 
+                                INNER JOIN 
+                                    eb_users U
+                                ON 
+                                    V.eb_files_ref_id = U.dprefid
+                                WHERE 
+                                    U.id = :userid";
+
+                    DbParameter[] parameters =
+                    {
+                        this.EbConnectionFactory.DataDB.GetNewParameter("userid",EbDbTypes.Int32,request.UserId),
+                    };
+
+                    var dt = this.EbConnectionFactory.DataDB.DoQuery(qry_refId, parameters);
+
+                    if (dt.Rows.Count == 0)
+                        throw new Exception("filestore_sid not found - FileRefId:" + request.ImageInfo.FileRefId + " Quality:" + request.ImageInfo.ImageQuality);
+                    else
+                    {
+                        request.ImageInfo.FileStoreId = dt.Rows[0][0].ToString();
+
+                        fb = this.EbConnectionFactory.FilesDB.DownloadFileById(request.ImageInfo.FileStoreId, EbFileCategory.Dp);
+                        if (fb != null)
+                            EbFile.Bytea_ToFile(fb, sFilePath);
+
+                    }
+                }
+
+                if (File.Exists(sFilePath))
+                {
+                    ms = new MemoryStream(File.ReadAllBytes(sFilePath));
+                    dfs.StreamWrapper = new MemorystreamWrapper(ms);
+                }
+                else
+                    throw new Exception("File Not Found");
+
+            }
+            catch (Exception ee)
+            {
+                Log.Info("Exception:" + ee.ToString());
+            }
+            return dfs;
+        }
     }
 }
