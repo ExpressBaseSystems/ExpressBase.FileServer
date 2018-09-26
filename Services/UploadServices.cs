@@ -1,4 +1,5 @@
-﻿using ExpressBase.Common.Data;
+﻿using ExpressBase.Common;
+using ExpressBase.Common.Data;
 using ExpressBase.Common.EbServiceStack.ReqNRes;
 using ExpressBase.Common.Enums;
 using ExpressBase.Common.Structures;
@@ -61,11 +62,14 @@ RETURNING id";
                 req = new UploadDpRequest();
             else if (request.ImageInfo.FileCategory == EbFileCategory.Images)
                 req = new UploadImageRequest();
+            else if (request.ImageInfo.FileCategory == EbFileCategory.SolLogo)
+                req = new UploadLogoRequest();
 
             try
             {
                 req.Byte = request.ImageByte;
                 req.FileCategory = request.ImageInfo.FileCategory;
+                req.SolutionId = request.SolutionId;
                 req.SolnId = request.SolnId;
                 req.UserId = request.UserId;
                 req.UserAuthId = request.UserAuthId;
@@ -89,6 +93,7 @@ RETURNING id";
         private int GetFileRefId(int userId, string filename, string filetype, string tags, EbFileCategory ebFileCategory)
         {
             int refId = 0;
+            EbDataTable table = null ;
             try
             {
                 DbParameter[] parameters =
@@ -99,7 +104,13 @@ RETURNING id";
                         this.EbConnectionFactory.DataDB.GetNewParameter("tags", EbDbTypes.String, string.IsNullOrEmpty(tags)? string.Empty: tags),
                         this.EbConnectionFactory.DataDB.GetNewParameter("filecategory", EbDbTypes.Int16, ebFileCategory)
             };
-                var table = this.EbConnectionFactory.DataDB.DoQuery(IdFetchQuery, parameters);
+                if(ebFileCategory == EbFileCategory.SolLogo)
+                {
+                    table = this.InfraConnectionFactory.DataDB.DoQuery(IdFetchQuery, parameters);
+                }
+                else
+                    table = this.EbConnectionFactory.DataDB.DoQuery(IdFetchQuery, parameters);
+
                 refId = (int)table.Rows[0][0];
             }
             catch (Exception e)

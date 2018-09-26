@@ -416,5 +416,58 @@ ORDER BY B.imagequality_id;";
             }
             return dfs;
         }
+
+        public DownloadFileResponse Get(DownloadLogoExtRequest request)
+        {
+            DownloadFileResponse dfs = new DownloadFileResponse();
+            MemoryStream ms = null;
+            byte[] fb = new byte[0];
+            string sFilePath = string.Format("../StaticFiles/{0}/logo/{1}", request.SolnId, request.SolnId);
+
+            try
+            {
+                if (!System.IO.File.Exists(sFilePath))
+                {
+                    string qry_refId = @"SELECT 
+	                                        filestore_sid 
+                                        FROM 
+	                                        eb_files_ref_variations V 
+                                        INNER JOIN 
+	                                        eb_solutions S
+                                        ON 
+	                                        V.eb_files_ref_id = S.logorefid
+                                        WHERE 
+	                                        S.isolution_id = :solid;";
+
+                    DbParameter[] parameters =
+                    {
+                        this.InfraConnectionFactory.DataDB.GetNewParameter("solid",EbDbTypes.String,request.SolnId),
+                    };
+
+                    var dt = this.InfraConnectionFactory.DataDB.DoQuery(qry_refId, parameters);
+
+                    if (dt.Rows.Count == 0)
+                        throw new Exception("filestore_sid not found - FileRefId:" + request.ImageInfo.FileRefId + " Quality:" + request.ImageInfo.ImageQuality);
+                    else
+                    {
+                        fb = this.InfraConnectionFactory.FilesDB.DownloadFileById(dt.Rows[0][0].ToString(), EbFileCategory.SolLogo);
+                        if (fb != null)
+                            EbFile.Bytea_ToFile(fb, sFilePath);
+                    }
+                }
+                if (File.Exists(sFilePath))
+                {
+                    ms = new MemoryStream(File.ReadAllBytes(sFilePath));
+                    dfs.StreamWrapper = new MemorystreamWrapper(ms);
+                }
+                else
+                    throw new Exception("File Not Found");
+            }
+            catch (Exception ee)
+            {
+                Log.Info("Exception:" + ee.ToString());
+            }
+            return dfs;
+        }
     }
 }
