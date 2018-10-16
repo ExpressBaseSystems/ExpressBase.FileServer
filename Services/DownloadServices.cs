@@ -364,7 +364,7 @@ ORDER BY B.imagequality_id;";
             DownloadFileResponse dfs = new DownloadFileResponse();
             MemoryStream ms = null;
             byte[] fb = new byte[0];
-            string sFilePath = string.Format("../StaticFiles/{0}/dp/{1}", request.SolnId, request.UserId);
+            string sFilePath = string.Format("../StaticFiles/{0}/dp/{1}", request.SolnId, request.ImageInfo.FileName);
 
             try
             {
@@ -384,7 +384,7 @@ ORDER BY B.imagequality_id;";
 
                     DbParameter[] parameters =
                     {
-                        this.EbConnectionFactory.DataDB.GetNewParameter("userid",EbDbTypes.Int32,request.UserId),
+                        this.EbConnectionFactory.DataDB.GetNewParameter("userid",EbDbTypes.Int32,Convert.ToInt32(request.ImageInfo.FileName)),
                     };
 
                     var dt = this.EbConnectionFactory.DataDB.DoQuery(qry_refId, parameters);
