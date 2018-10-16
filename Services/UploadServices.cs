@@ -102,7 +102,7 @@ RETURNING id";
                         this.EbConnectionFactory.DataDB.GetNewParameter("filename", EbDbTypes.String, filename),
                         this.EbConnectionFactory.DataDB.GetNewParameter("filetype", EbDbTypes.String, filetype),
                         this.EbConnectionFactory.DataDB.GetNewParameter("tags", EbDbTypes.String, string.IsNullOrEmpty(tags)? string.Empty: tags),
-                        this.EbConnectionFactory.DataDB.GetNewParameter("filecategory", EbDbTypes.Int16, ebFileCategory)
+                        this.EbConnectionFactory.DataDB.GetNewParameter("filecategory", EbDbTypes.Int16, (int)ebFileCategory)
             };
                 if(ebFileCategory == EbFileCategory.SolLogo)
                 {
