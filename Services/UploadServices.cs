@@ -18,9 +18,9 @@ namespace ExpressBase.StaticFileServer
 
         private static readonly string IdFetchQuery =
 @"INSERT INTO
-    eb_files_ref (userid, filename, filetype, tags, filecategory) 
+    eb_files_ref (userid, filename, filetype, tags, filecategory, uploadts) 
 VALUES 
-    (@userid, @filename, @filetype, @tags, @filecategory) 
+    (@userid, @filename, @filetype, @tags, @filecategory, NOW()) 
 RETURNING id";
 
         [Authenticate]
