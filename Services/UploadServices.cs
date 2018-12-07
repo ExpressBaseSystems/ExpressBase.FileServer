@@ -93,7 +93,7 @@ RETURNING id";
         private int GetFileRefId(int userId, string filename, string filetype, string tags, EbFileCategory ebFileCategory)
         {
             int refId = 0;
-            EbDataTable table = null ;
+            EbDataTable table = null;
             try
             {
                 DbParameter[] parameters =
@@ -104,7 +104,7 @@ RETURNING id";
                         this.EbConnectionFactory.DataDB.GetNewParameter("tags", EbDbTypes.String, string.IsNullOrEmpty(tags)? string.Empty: tags),
                         this.EbConnectionFactory.DataDB.GetNewParameter("filecategory", EbDbTypes.Int16, (int)ebFileCategory)
             };
-                if(ebFileCategory == EbFileCategory.SolLogo)
+                if (ebFileCategory == EbFileCategory.SolLogo)
                 {
                     table = this.InfraConnectionFactory.DataDB.DoQuery(IdFetchQuery, parameters);
                 }
@@ -118,6 +118,39 @@ RETURNING id";
                 Console.WriteLine("ERROR: POSGRE: " + e.Message);
             }
             return refId;
+        }
+
+        [Authenticate]
+        public FileCategoryChangeResponse Post(FileCategoryChangeRequest request)
+        {
+            int result;
+            var sql = @"UPDATE 
+	                        eb_files_ref FR
+                        SET
+	                        tags = jsonb_set(cast(tags as jsonb),
+							'{Category}',
+							(SELECT (cast(tags as jsonb)->'Category')-0 || to_jsonb(:categry::text)),
+                            true)
+                        WHERE 
+                            FR.id = ANY(string_to_array(:ids,',')::int[]);";
+            try
+            {
+                DbParameter[] parameters =
+              {
+                this.EbConnectionFactory.DataDB.GetNewParameter("categry", EbDbTypes.String,request.Category),
+                this.EbConnectionFactory.DataDB.GetNewParameter("ids", EbDbTypes.String, request.FileRefId.Join(",")),
+                };
+
+                result = this.EbConnectionFactory.DataDB.DoNonQuery(sql, parameters);
+            }
+            catch (Exception ex)
+            {
+                result = 0;
+                Console.BackgroundColor = ConsoleColor.Red;
+                Console.WriteLine("Exception while updating Category:", ex.Message);
+            }
+           
+            return new FileCategoryChangeResponse { Status = (result > 0)?true:false };
         }
     }
 }
