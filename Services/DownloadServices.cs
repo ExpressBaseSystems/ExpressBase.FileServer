@@ -95,7 +95,7 @@ WHERE
                     request.FileDetails.FileStoreId = t.Rows[0][0].ToString();
 
 
-                    fb = this.EbConnectionFactory.FilesDB.DownloadFileById(request.FileDetails.FileStoreId, category);
+                    fb = this.EbConnectionFactory.FilesDB[0].DownloadFileById(request.FileDetails.FileStoreId, category);
 
                     if (fb != null)
                     {
@@ -248,7 +248,7 @@ ORDER BY B.imagequality_id;";
                         request.ImageInfo.FileStoreId = sidAll[(int)ImageQuality.original];
                     }
 
-                    fb = this.EbConnectionFactory.FilesDB.DownloadFileById(request.ImageInfo.FileStoreId, category);
+                    fb = this.EbConnectionFactory.FilesDB[0].DownloadFileById(request.ImageInfo.FileStoreId, category);
 
                     if (fb != null)
                         EbFile.Bytea_ToFile(fb, sFilePath);
@@ -395,7 +395,7 @@ ORDER BY B.imagequality_id;";
                     {
                         request.ImageInfo.FileStoreId = dt.Rows[0][0].ToString();
 
-                        fb = this.EbConnectionFactory.FilesDB.DownloadFileById(request.ImageInfo.FileStoreId, EbFileCategory.Dp);
+                        fb = this.EbConnectionFactory.FilesDB[0].DownloadFileById(request.ImageInfo.FileStoreId, EbFileCategory.Dp);
                         if (fb != null)
                             EbFile.Bytea_ToFile(fb, sFilePath);
 
@@ -451,7 +451,7 @@ ORDER BY B.imagequality_id;";
                         throw new Exception("filestore_sid not found - FileRefId:" + request.ImageInfo.FileRefId + " Quality:" + request.ImageInfo.ImageQuality);
                     else
                     {
-                        fb = this.InfraConnectionFactory.FilesDB.DownloadFileById(dt.Rows[0][0].ToString(), EbFileCategory.SolLogo);
+                        fb = this.InfraConnectionFactory.FilesDB[0].DownloadFileById(dt.Rows[0][0].ToString(), EbFileCategory.SolLogo);
                         if (fb != null)
                             EbFile.Bytea_ToFile(fb, sFilePath);
                     }
