@@ -78,12 +78,12 @@ namespace ExpressBase.StaticFileServer.Services
                     EbFileCategory category = request.FileDetails.FileCategory;
 
                     string Qry = @"
-SELECT 
-    B.filestore_sid 
-FROM 
-    eb_files_ref A, eb_files_ref_variations B
-WHERE 
-    A.id=B.eb_files_ref_id AND A.id=:fileref;";
+                        SELECT 
+                            B.filestore_sid , B.filedb_con_id
+                        FROM 
+                            eb_files_ref A, eb_files_ref_variations B
+                        WHERE 
+                            A.id=B.eb_files_ref_id AND A.id=:fileref;";
 
 
                     DbParameter[] parameters =
@@ -91,11 +91,12 @@ WHERE
                         this.EbConnectionFactory.DataDB.GetNewParameter("fileref", EbDbTypes.Int32, request.FileDetails.FileRefId),
                     };
 
-                    var t = this.EbConnectionFactory.DataDB.DoQuery(Qry, parameters);
-                    request.FileDetails.FileStoreId = t.Rows[0][0].ToString();
+                    EbDataTable t = this.EbConnectionFactory.DataDB.DoQuery(Qry, parameters);
+                    request.FileDetails.FileStoreId = t.Rows[0]["filestore_sid"].ToString();
+                    request.FileDetails.InfraConID = Convert.ToInt32(t.Rows[0]["filedb_con_id"]);
 
 
-                    fb = this.EbConnectionFactory.FilesDB[0].DownloadFileById(request.FileDetails.FileStoreId, category);
+                    fb = this.EbConnectionFactory.FilesDB.DownloadFileById(request.FileDetails.FileStoreId, category, request.FileDetails.InfraConID);
 
                     if (fb != null)
                     {
@@ -214,41 +215,40 @@ WHERE
                     EbFileCategory category = request.ImageInfo.FileCategory;
 
                     string Qry = @"
-SELECT 
-     B.imagequality_id, B.filestore_sid
-FROM 
-    eb_files_ref A, eb_files_ref_variations B
-WHERE 
-    A.id=B.eb_files_ref_id AND A.id=:fileref
-ORDER BY B.imagequality_id;";
+                        SELECT 
+                             B.imagequality_id, B.filestore_sid, B.filedb_con_id
+                        FROM 
+                            eb_files_ref A, eb_files_ref_variations B
+                        WHERE 
+                            A.id=B.eb_files_ref_id AND A.id=:fileref
+                        ORDER BY B.imagequality_id;";
 
-
-                    DbParameter[] parameters =
-                    {
-                        this.EbConnectionFactory.DataDB.GetNewParameter("fileref", EbDbTypes.Int32, request.ImageInfo.FileRefId)
-                    };
-
-                    var t = this.EbConnectionFactory.DataDB.DoQuery(Qry, parameters);
+                    DbParameter[] parameters = { this.EbConnectionFactory.DataDB.GetNewParameter("fileref", EbDbTypes.Int32, request.ImageInfo.FileRefId) };
+                    EbDataTable t = this.EbConnectionFactory.DataDB.DoQuery(Qry, parameters);
 
                     if (t.Rows.Count == 0)
                     {
                         throw new Exception("filestore_sid not found - FileRefId:" + request.ImageInfo.FileRefId + " Quality:" + request.ImageInfo.ImageQuality);
                     }
-                    Dictionary<int, string> sidAll = new Dictionary<int, string>();
+
+                    Dictionary<int, ImageMeta> sidAll = new Dictionary<int, ImageMeta>();
+
                     for (int i = 0; i < t.Rows.Count; i++)
                     {
-                        sidAll.Add(Convert.ToInt32(t.Rows[i][0]), t.Rows[i][1].ToString());
+                        sidAll.Add(Convert.ToInt32(t.Rows[i][0]), new ImageMeta() { FileStoreId = t.Rows[i][1].ToString(), InfraConID = Convert.ToInt32(t.Rows[i][2]) });
                     }
                     if (sidAll.ContainsKey((int)request.ImageInfo.ImageQuality))
                     {
-                        request.ImageInfo.FileStoreId = sidAll[(int)request.ImageInfo.ImageQuality];
+                        request.ImageInfo.FileStoreId = sidAll[(int)request.ImageInfo.ImageQuality].FileStoreId;
+                        request.ImageInfo.InfraConID = sidAll[(int)request.ImageInfo.ImageQuality].InfraConID;
                     }
                     else
                     {
-                        request.ImageInfo.FileStoreId = sidAll[(int)ImageQuality.original];
+                        request.ImageInfo.FileStoreId = sidAll[(int)ImageQuality.original].FileStoreId;
+                        request.ImageInfo.InfraConID = sidAll[(int)ImageQuality.original].InfraConID;
                     }
 
-                    fb = this.EbConnectionFactory.FilesDB[0].DownloadFileById(request.ImageInfo.FileStoreId, category);
+                    fb = this.EbConnectionFactory.FilesDB.DownloadFileById(request.ImageInfo.FileStoreId, category, request.ImageInfo.InfraConID);
 
                     if (fb != null)
                         EbFile.Bytea_ToFile(fb, sFilePath);
@@ -371,7 +371,7 @@ ORDER BY B.imagequality_id;";
                 if (!System.IO.File.Exists(sFilePath))
                 {
                     string qry_refId = @"SELECT 
-                                    filestore_sid 
+                                    filestore_sid , V.filedb_con_id
                                 FROM 
                                     eb_files_ref_variations V 
                                 INNER JOIN 
@@ -394,8 +394,9 @@ ORDER BY B.imagequality_id;";
                     else
                     {
                         request.ImageInfo.FileStoreId = dt.Rows[0][0].ToString();
+                        request.ImageInfo.InfraConID = Convert.ToInt32(dt.Rows[0][1]);
 
-                        fb = this.EbConnectionFactory.FilesDB[0].DownloadFileById(request.ImageInfo.FileStoreId, EbFileCategory.Dp);
+                        fb = this.EbConnectionFactory.FilesDB.DownloadFileById(request.ImageInfo.FileStoreId, EbFileCategory.Dp, request.ImageInfo.InfraConID);
                         if (fb != null)
                             EbFile.Bytea_ToFile(fb, sFilePath);
 
@@ -430,7 +431,7 @@ ORDER BY B.imagequality_id;";
                 if (!System.IO.File.Exists(sFilePath))
                 {
                     string qry_refId = @"SELECT 
-	                                        filestore_sid 
+	                                        filestore_sid , V.filedb_con_id
                                         FROM 
 	                                        eb_files_ref_variations V 
                                         INNER JOIN 
@@ -451,7 +452,7 @@ ORDER BY B.imagequality_id;";
                         throw new Exception("filestore_sid not found - FileRefId:" + request.ImageInfo.FileRefId + " Quality:" + request.ImageInfo.ImageQuality);
                     else
                     {
-                        fb = this.InfraConnectionFactory.FilesDB[0].DownloadFileById(dt.Rows[0][0].ToString(), EbFileCategory.SolLogo);
+                        fb = this.InfraConnectionFactory.FilesDB.DownloadFileById(dt.Rows[0][0].ToString(), EbFileCategory.SolLogo, Convert.ToInt32(dt.Rows[0][1]));
                         if (fb != null)
                             EbFile.Bytea_ToFile(fb, sFilePath);
                     }
