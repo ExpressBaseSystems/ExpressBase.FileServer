@@ -29,7 +29,11 @@ RETURNING id";
             UploadAsyncResponse res = new UploadAsyncResponse();
             try
             {
+                Log.Info("Inside FileUpload");
+
                 request.FileDetails.FileRefId = GetFileRefId(request.UserId, request.FileDetails.FileName, request.FileDetails.FileType, request.FileDetails.MetaDataDictionary.ToString(), request.FileDetails.FileCategory);
+
+                Log.Info("FileRefId : " + request.FileDetails.FileRefId);
 
                 this.MessageProducer3.Publish(new UploadFileRequest()
                 {
@@ -42,10 +46,12 @@ RETURNING id";
                     RToken = (!String.IsNullOrEmpty(this.Request.Headers["rToken"])) ? this.Request.Headers["rToken"] : String.Empty
                 });
                 res.FileRefId = request.FileDetails.FileRefId;
+
+                Log.Info("File Pushed to MQ");
             }
             catch (Exception e)
             {
-                Log.Info("Exception:" + e.ToString());
+                Log.Info("Exception:" + e.StackTrace());
                 res.ResponseStatus.Message = e.Message;
             }
             return res;
