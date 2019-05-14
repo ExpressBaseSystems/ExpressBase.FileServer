@@ -26,11 +26,11 @@ RETURNING id";
         [Authenticate]
         public UploadAsyncResponse Post(UploadFileAsyncRequest request)
         {
+            Log.Info("Inside FileUpload");
+
             UploadAsyncResponse res = new UploadAsyncResponse();
             try
             {
-                Log.Info("Inside FileUpload");
-
                 request.FileDetails.FileRefId = GetFileRefId(request.UserId, request.FileDetails.FileName, request.FileDetails.FileType, request.FileDetails.MetaDataDictionary.ToString(), request.FileDetails.FileCategory);
 
                 Log.Info("FileRefId : " + request.FileDetails.FileRefId);
@@ -51,7 +51,7 @@ RETURNING id";
             }
             catch (Exception e)
             {
-                Log.Info("Exception:" + e.StackTrace());
+                Log.Info("Exception:" + e.StackTrace);
                 res.ResponseStatus.Message = e.Message;
             }
             return res;
