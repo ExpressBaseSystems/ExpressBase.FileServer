@@ -31,7 +31,8 @@ RETURNING id";
             UploadAsyncResponse res = new UploadAsyncResponse();
             try
             {
-                request.FileDetails.FileRefId = GetFileRefId(request.UserId, request.FileDetails.FileName, request.FileDetails.FileType, request.FileDetails.MetaDataDictionary.ToString(), request.FileDetails.FileCategory);
+                string meta = (request.FileDetails.MetaDataDictionary == null) ? "" : request.FileDetails.MetaDataDictionary.ToString();
+                request.FileDetails.FileRefId = GetFileRefId(request.UserId, request.FileDetails.FileName, request.FileDetails.FileType, meta, request.FileDetails.FileCategory);
 
                 Log.Info("FileRefId : " + request.FileDetails.FileRefId);
 
