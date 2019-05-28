@@ -16,12 +16,12 @@ namespace ExpressBase.StaticFileServer
         {
         }
 
-        private static readonly string IdFetchQuery =
-@"INSERT INTO
-    eb_files_ref (userid, filename, filetype, tags, filecategory, uploadts) 
-VALUES 
-    (@userid, @filename, @filetype, @tags, @filecategory, NOW()) 
-RETURNING id";
+//        private static readonly string IdFetchQuery =
+//@"INSERT INTO
+//    eb_files_ref (userid, filename, filetype, tags, filecategory, uploadts) 
+//VALUES 
+//    (@userid, @filename, @filetype, @tags, @filecategory, NOW()) 
+//RETURNING id";
 
         [Authenticate]
         public UploadAsyncResponse Post(UploadFileAsyncRequest request)
@@ -113,12 +113,13 @@ RETURNING id";
             };
                 if (ebFileCategory == EbFileCategory.SolLogo)
                 {
-                    table = this.InfraConnectionFactory.DataDB.DoQuery(IdFetchQuery, parameters);
+                    table = this.InfraConnectionFactory.DataDB.DoQuery(EbConnectionFactory.DataDB.EB_UPLOAD_IDFETCHQUERY, parameters);
                 }
                 else
-                    table = this.EbConnectionFactory.DataDB.DoQuery(IdFetchQuery, parameters);
+                    table = this.EbConnectionFactory.DataDB.DoQuery(EbConnectionFactory.DataDB.EB_UPLOAD_IDFETCHQUERY, parameters);
 
-                refId = (int)table.Rows[0][0];
+                string s = table.Rows[0][0].ToString();
+                refId = int.Parse(s);
             }
             catch (Exception e)
             {
@@ -131,15 +132,7 @@ RETURNING id";
         public FileCategoryChangeResponse Post(FileCategoryChangeRequest request)
         {
             int result;
-            var sql = @"UPDATE 
-	                        eb_files_ref FR
-                        SET
-	                        tags = jsonb_set(cast(tags as jsonb),
-							'{Category}',
-							(SELECT (cast(tags as jsonb)->'Category')-0 || to_jsonb(:categry::text)),
-                            true)
-                        WHERE 
-                            FR.id = ANY(string_to_array(:ids,',')::int[]);";
+            string sql = EbConnectionFactory.DataDB.EB_FILECATEGORYCHANGE;
             try
             {
                 DbParameter[] parameters =
