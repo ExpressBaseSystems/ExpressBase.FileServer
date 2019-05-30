@@ -90,9 +90,12 @@ namespace ExpressBase.StaticFileServer.Services
                     };
 
                     EbDataTable t = this.EbConnectionFactory.DataDB.DoQuery(Qry, parameters);
-                    request.FileDetails.FileStoreId = t.Rows[0]["filestore_sid"].ToString();
-                    request.FileDetails.InfraConID = Convert.ToInt32(t.Rows[0]["filedb_con_id"]);
-
+                    if (t.Rows.Count > 0)
+                    {
+                        request.FileDetails.FileStoreId = t.Rows[0]["filestore_sid"].ToString();
+                        request.FileDetails.InfraConID = Convert.ToInt32(t.Rows[0]["filedb_con_id"]);
+                    }
+                    else { throw new Exception("File Not Found in Database , fileref = " + request.FileDetails.FileRefId); }
 
                     fb = this.EbConnectionFactory.FilesDB.DownloadFileById(request.FileDetails.FileStoreId, category, request.FileDetails.InfraConID);
 
@@ -450,7 +453,7 @@ namespace ExpressBase.StaticFileServer.Services
                         throw new Exception("filestore_sid not found - FileRefId:" + request.ImageInfo.FileRefId + " Quality:" + request.ImageInfo.ImageQuality);
                     else
                     {
-                        Console.WriteLine(" Calling FilesDB.DownloadFileById :(" + Convert.ToInt32(dt.Rows[0][1])+ "  ," + dt.Rows[0][0].ToString()+"  ," +EbFileCategory.SolLogo);
+                        Console.WriteLine(" Calling FilesDB.DownloadFileById :(InfraconId =" + Convert.ToInt32(dt.Rows[0][1]) + "  ,filestoreid =" + dt.Rows[0][0].ToString());
                         fb = this.InfraConnectionFactory.FilesDB.DownloadFileById(dt.Rows[0][0].ToString(), EbFileCategory.SolLogo, Convert.ToInt32(dt.Rows[0][1]));
                         if (fb != null)
                             EbFile.Bytea_ToFile(fb, sFilePath);
