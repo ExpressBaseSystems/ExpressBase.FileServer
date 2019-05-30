@@ -450,6 +450,7 @@ namespace ExpressBase.StaticFileServer.Services
                         throw new Exception("filestore_sid not found - FileRefId:" + request.ImageInfo.FileRefId + " Quality:" + request.ImageInfo.ImageQuality);
                     else
                     {
+                        Console.WriteLine(" Calling FilesDB.DownloadFileById :(" + Convert.ToInt32(dt.Rows[0][1])+ "  ," + dt.Rows[0][0].ToString()+"  ," +EbFileCategory.SolLogo);
                         fb = this.InfraConnectionFactory.FilesDB.DownloadFileById(dt.Rows[0][0].ToString(), EbFileCategory.SolLogo, Convert.ToInt32(dt.Rows[0][1]));
                         if (fb != null)
                             EbFile.Bytea_ToFile(fb, sFilePath);
