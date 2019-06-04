@@ -19,6 +19,7 @@ using ServiceStack.RabbitMq;
 using ServiceStack.Redis;
 using System;
 using System.IdentityModel.Tokens.Jwt;
+using System.Reflection;
 
 namespace ExpressBase.StaticFileServer
 {
@@ -105,6 +106,12 @@ namespace ExpressBase.StaticFileServer
                Environment.GetEnvironmentVariable(EnvironmentConstants.EB_REDIS_PORT));
 
             container.Register<IRedisClientsManager>(c => new RedisManagerPool(redisConnectionString));
+            //Setting Assembly version in Redis
+            RedisClient client = (container.Resolve<IRedisClientsManager>() as RedisManagerPool).GetClient() as RedisClient;
+            AssemblyName assembly = Assembly.GetExecutingAssembly().GetName();
+            String version = assembly.Name.ToString() + " - " + assembly.Version.ToString();
+            client.Set("FileServerAssembly", version);
+
             container.Register<IEbConnectionFactory>(c => new EbConnectionFactory(c)).ReusedWithin(ReuseScope.Request);
             container.Register<IEbServerEventClient>(c => new EbServerEventClient()).ReusedWithin(ReuseScope.Request);
             container.Register<IEbMqClient>(c => new EbMqClient()).ReusedWithin(ReuseScope.Request);
