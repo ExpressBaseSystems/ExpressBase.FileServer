@@ -490,13 +490,13 @@ namespace ExpressBase.StaticFileServer.Services
                                     FROM 
                                         eb_files_ref A, eb_files_ref_variations B
                                     WHERE 
-                                        A.id=B.eb_files_ref_id AND A.id=:fileref AND context = 'wiki'
+                                        A.id=B.eb_files_ref_id AND A.id=:fileref AND context = 'eb_wiki'
                                     ORDER BY 
                                         B.imagequality_id;";
 
                     DbParameter[] parameters =
                     {
-                        this.InfraConnectionFactory.DataDB.GetNewParameter("refid",EbDbTypes.String,request.RefId),
+                        this.InfraConnectionFactory.DataDB.GetNewParameter("fileref",EbDbTypes.Int16, Convert.ToInt32(request.RefId)),
                     };
 
                     var t = this.InfraConnectionFactory.DataDB.DoQuery(qry_refId, parameters);

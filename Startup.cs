@@ -143,7 +143,7 @@ namespace ExpressBase.StaticFileServer
                 try
                 {
                     log.Info("In Try");
-                    if (requestDto != null && requestDto.GetType() != typeof(DownloadFileExtRequest) && requestDto.GetType() != typeof(DownloadLogoExtRequest))
+                    if (requestDto != null && requestDto.GetType() != typeof(DownloadFileExtRequest) && requestDto.GetType() != typeof(DownloadLogoExtRequest) && !(requestDto is EbServiceStackNoAuthRequest))
                     {
                         log.Info("In Auth Header");
                         var auth = req.Headers[HttpHeaders.Authorization];
