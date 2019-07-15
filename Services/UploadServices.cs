@@ -1,4 +1,5 @@
 ﻿using ExpressBase.Common;
+using ExpressBase.Common.Constants;
 using ExpressBase.Common.Data;
 using ExpressBase.Common.EbServiceStack.ReqNRes;
 using ExpressBase.Common.Enums;
@@ -16,12 +17,12 @@ namespace ExpressBase.StaticFileServer
         {
         }
 
-//        private static readonly string IdFetchQuery =
-//@"INSERT INTO
-//    eb_files_ref (userid, filename, filetype, tags, filecategory, uploadts) 
-//VALUES 
-//    (@userid, @filename, @filetype, @tags, @filecategory, NOW()) 
-//RETURNING id";
+        //        private static readonly string IdFetchQuery =
+        //@"INSERT INTO
+        //    eb_files_ref (userid, filename, filetype, tags, filecategory, uploadts) 
+        //VALUES 
+        //    (@userid, @filename, @filetype, @tags, @filecategory, NOW()) 
+        //RETURNING id";
 
         [Authenticate]
         public UploadAsyncResponse Post(UploadFileAsyncRequest request)
@@ -31,8 +32,9 @@ namespace ExpressBase.StaticFileServer
             UploadAsyncResponse res = new UploadAsyncResponse();
             try
             {
+                string context = string.IsNullOrEmpty(request.FileDetails.Context) ? StaticFileConstants.CONTEXT_DEFAULT : request.FileDetails.Context;
                 string meta = (request.FileDetails.MetaDataDictionary == null) ? "" : request.FileDetails.MetaDataDictionary.ToString();
-                request.FileDetails.FileRefId = GetFileRefId(request.UserId, request.FileDetails.FileName, request.FileDetails.FileType, meta, request.FileDetails.FileCategory);
+                request.FileDetails.FileRefId = GetFileRefId(request.UserId, request.FileDetails.FileName, request.FileDetails.FileType, meta, request.FileDetails.FileCategory,context);
 
                 Log.Info("FileRefId : " + request.FileDetails.FileRefId);
 
@@ -74,6 +76,7 @@ namespace ExpressBase.StaticFileServer
 
             try
             {
+                string context = string.IsNullOrEmpty(request.ImageInfo.Context) ? StaticFileConstants.CONTEXT_DEFAULT : request.ImageInfo.Context;
                 req.Byte = request.ImageByte;
                 req.FileCategory = request.ImageInfo.FileCategory;
                 req.SolutionId = request.SolutionId;
@@ -83,7 +86,7 @@ namespace ExpressBase.StaticFileServer
                 req.BToken = (!String.IsNullOrEmpty(this.Request.Authorization)) ? this.Request.Authorization.Replace("Bearer", string.Empty).Trim() : String.Empty;
                 req.RToken = (!String.IsNullOrEmpty(this.Request.Headers["rToken"])) ? this.Request.Headers["rToken"] : String.Empty;
 
-                req.ImageRefId = GetFileRefId(request.UserId, request.ImageInfo.FileName, request.ImageInfo.FileType, request.ImageInfo.MetaDataDictionary.ToJson(), request.ImageInfo.FileCategory);
+                req.ImageRefId = GetFileRefId(request.UserId, request.ImageInfo.FileName, request.ImageInfo.FileType, request.ImageInfo.MetaDataDictionary.ToJson(), request.ImageInfo.FileCategory,request.ImageInfo.Context);
 
                 this.MessageProducer3.Publish(req);
                 res.FileRefId = req.ImageRefId;
@@ -97,10 +100,14 @@ namespace ExpressBase.StaticFileServer
             return res;
         }
 
-        private int GetFileRefId(int userId, string filename, string filetype, string tags, EbFileCategory ebFileCategory)
+        private int GetFileRefId(int userId, string filename, string filetype, string tags, EbFileCategory ebFileCategory, string context)
         {
             int refId = 0;
             EbDataTable table = null;
+            //logging connection
+            Console.WriteLine("FileClient Connection at GetFileRefId");
+            Console.WriteLine(this.EbConnectionFactory.DataDB.DBName);
+
             try
             {
                 DbParameter[] parameters =
@@ -109,7 +116,8 @@ namespace ExpressBase.StaticFileServer
                         this.EbConnectionFactory.DataDB.GetNewParameter("filename", EbDbTypes.String, filename),
                         this.EbConnectionFactory.DataDB.GetNewParameter("filetype", EbDbTypes.String, filetype),
                         this.EbConnectionFactory.DataDB.GetNewParameter("tags", EbDbTypes.String, string.IsNullOrEmpty(tags)? string.Empty: tags),
-                        this.EbConnectionFactory.DataDB.GetNewParameter("filecategory", EbDbTypes.Int16, (int)ebFileCategory)
+                        this.EbConnectionFactory.DataDB.GetNewParameter("filecategory", EbDbTypes.Int16, (int)ebFileCategory),
+                        this.EbConnectionFactory.DataDB.GetNewParameter("context",EbDbTypes.String,context)
             };
                 if (ebFileCategory == EbFileCategory.SolLogo)
                 {
@@ -149,8 +157,8 @@ namespace ExpressBase.StaticFileServer
                 Console.BackgroundColor = ConsoleColor.Red;
                 Console.WriteLine("Exception while updating Category:", ex.Message);
             }
-           
-            return new FileCategoryChangeResponse { Status = (result > 0)?true:false };
+
+            return new FileCategoryChangeResponse { Status = (result > 0) ? true : false };
         }
     }
 }
