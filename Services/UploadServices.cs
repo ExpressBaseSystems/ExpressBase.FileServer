@@ -34,7 +34,7 @@ namespace ExpressBase.StaticFileServer
             {
                 string context = string.IsNullOrEmpty(request.FileDetails.Context) ? StaticFileConstants.CONTEXT_DEFAULT : request.FileDetails.Context;
                 string meta = (request.FileDetails.MetaDataDictionary == null) ? "" : request.FileDetails.MetaDataDictionary.ToString();
-                request.FileDetails.FileRefId = GetFileRefId(request.UserId, request.FileDetails.FileName, request.FileDetails.FileType, meta, request.FileDetails.FileCategory,context);
+                request.FileDetails.FileRefId = GetFileRefId(request.UserId, request.FileDetails.FileName, request.FileDetails.FileType, meta, request.FileDetails.FileCategory, context);
 
                 Log.Info("FileRefId : " + request.FileDetails.FileRefId);
 
@@ -81,12 +81,12 @@ namespace ExpressBase.StaticFileServer
                 req.FileCategory = request.ImageInfo.FileCategory;
                 req.SolutionId = request.SolutionId;
                 req.SolnId = request.SolnId;
-                req.UserId = request.UserId;
+                req.UserId = (req is UploadDpRequest) ? request.UserIntId : request.UserId;
                 req.UserAuthId = request.UserAuthId;
                 req.BToken = (!String.IsNullOrEmpty(this.Request.Authorization)) ? this.Request.Authorization.Replace("Bearer", string.Empty).Trim() : String.Empty;
                 req.RToken = (!String.IsNullOrEmpty(this.Request.Headers["rToken"])) ? this.Request.Headers["rToken"] : String.Empty;
 
-                req.ImageRefId = GetFileRefId(request.UserId, request.ImageInfo.FileName, request.ImageInfo.FileType, request.ImageInfo.MetaDataDictionary.ToJson(), request.ImageInfo.FileCategory,request.ImageInfo.Context);
+                req.ImageRefId = GetFileRefId(request.UserId, request.ImageInfo.FileName, request.ImageInfo.FileType, request.ImageInfo.MetaDataDictionary.ToJson(), request.ImageInfo.FileCategory, request.ImageInfo.Context);
 
                 this.MessageProducer3.Publish(req);
                 res.FileRefId = req.ImageRefId;

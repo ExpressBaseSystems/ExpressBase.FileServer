@@ -379,10 +379,9 @@ namespace ExpressBase.StaticFileServer.Services
                                             eb_users U
                                         ON 
                                             V.eb_files_ref_id = U.dprefid
-                                            AND V.imagequality_id = 150
                                         WHERE 
                                             U.id = :userid";
-
+                    //AND V.imagequality_id = 150
                     DbParameter[] parameters =
                     {
                         this.EbConnectionFactory.DataDB.GetNewParameter("userid",EbDbTypes.Int32,Convert.ToInt32(request.ImageInfo.FileName)),
