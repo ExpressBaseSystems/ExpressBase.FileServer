@@ -100,6 +100,39 @@ namespace ExpressBase.StaticFileServer
             return res;
         }
 
+        [Authenticate]
+        public UploadAsyncResponse Post(UploadImageInfraRequest request)
+        {
+            UploadAsyncResponse res = new UploadAsyncResponse();
+            Log.Info("Inside ImageInfraUpload");
+            IUploadImageRequest req = new UploadImageInfraMqRequest();
+
+            try
+            {
+                string context = string.IsNullOrEmpty(request.ImageInfo.Context) ? StaticFileConstants.CONTEXT_DEFAULT : request.ImageInfo.Context;
+                req.Byte = request.ImageByte;
+                req.FileCategory = request.ImageInfo.FileCategory;
+                req.SolutionId = request.SolutionId;
+                req.SolnId = request.SolnId;
+                req.UserId = request.UserId;
+                req.UserAuthId = request.UserAuthId;
+                req.BToken = (!String.IsNullOrEmpty(this.Request.Authorization)) ? this.Request.Authorization.Replace("Bearer", string.Empty).Trim() : String.Empty;
+                req.RToken = (!String.IsNullOrEmpty(this.Request.Headers["rToken"])) ? this.Request.Headers["rToken"] : String.Empty;
+                
+                req.ImageRefId = this.GetFileRefIdInfra(request.UserId, request.ImageInfo.FileName, request.ImageInfo.FileType, request.ImageInfo.MetaDataDictionary.ToJson(), request.ImageInfo.FileCategory, request.ImageInfo.Context);
+
+                this.MessageProducer3.Publish(req);
+                res.FileRefId = req.ImageRefId;
+            }
+            catch (Exception e)
+            {
+                Log.Info("Exception:" + e.ToString());
+                res.FileRefId = 0;
+                res.ResponseStatus.Message = e.Message;
+            }
+            return res;
+        }
+
         private int GetFileRefId(int userId, string filename, string filetype, string tags, EbFileCategory ebFileCategory, string context)
         {
             int refId = 0;
@@ -125,6 +158,37 @@ namespace ExpressBase.StaticFileServer
                 }
                 else
                     table = this.EbConnectionFactory.DataDB.DoQuery(EbConnectionFactory.DataDB.EB_UPLOAD_IDFETCHQUERY, parameters);
+
+                string s = table.Rows[0][0].ToString();
+                refId = int.Parse(s);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("ERROR: POSGRE: " + e.Message);
+            }
+            return refId;
+        }
+
+        private int GetFileRefIdInfra(int userId, string filename, string filetype, string tags, EbFileCategory ebFileCategory, string context)
+        {
+            int refId = 0;
+            EbDataTable table = null;
+            //logging connection
+            Console.WriteLine("FileClient Connection at GetFileRefIdInfra");
+            Console.WriteLine(this.InfraConnectionFactory.DataDB.DBName);
+
+            try
+            {
+                DbParameter[] parameters =
+                {
+                        this.InfraConnectionFactory.DataDB.GetNewParameter("userid", EbDbTypes.Int32, userId),
+                        this.InfraConnectionFactory.DataDB.GetNewParameter("filename", EbDbTypes.String, filename),
+                        this.InfraConnectionFactory.DataDB.GetNewParameter("filetype", EbDbTypes.String, filetype),
+                        this.InfraConnectionFactory.DataDB.GetNewParameter("tags", EbDbTypes.String, string.IsNullOrEmpty(tags)? string.Empty: tags),
+                        this.InfraConnectionFactory.DataDB.GetNewParameter("filecategory", EbDbTypes.Int16, (int)ebFileCategory),
+                        this.InfraConnectionFactory.DataDB.GetNewParameter("context",EbDbTypes.String,context)
+            };
+                table = this.InfraConnectionFactory.DataDB.DoQuery(this.InfraConnectionFactory.DataDB.EB_UPLOAD_IDFETCHQUERY, parameters);
 
                 string s = table.Rows[0][0].ToString();
                 refId = int.Parse(s);

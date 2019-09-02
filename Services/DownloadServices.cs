@@ -558,5 +558,95 @@ namespace ExpressBase.StaticFileServer.Services
 
             return dfs;
         }
+
+        public DownloadFileResponse Get(DownloadInfraImgRequest request)
+        {
+            DownloadFileResponse dfs = new DownloadFileResponse();
+            MemoryStream ms = null;
+            byte[] fb = new byte[0];
+            string sFilePath = string.Format("../StaticFiles/eb/{0}", request.RefId);
+
+            try
+            {
+                if (!System.IO.File.Exists(sFilePath))
+                {
+                    string qry_refId = @"SELECT 
+                                        B.imagequality_id, B.filestore_sid, B.filedb_con_id
+                                    FROM 
+                                        eb_files_ref A, eb_files_ref_variations B
+                                    WHERE 
+                                        A.id=B.eb_files_ref_id AND A.id=:fileref
+                                    ORDER BY 
+                                        B.imagequality_id;";
+
+                    DbParameter[] parameters =
+                    {
+                        this.InfraConnectionFactory.DataDB.GetNewParameter("fileref",EbDbTypes.Int16, Convert.ToInt32(request.RefId)),
+                    };
+
+                    var t = this.InfraConnectionFactory.DataDB.DoQuery(qry_refId, parameters);
+
+                    if (t.Rows.Count == 0)
+                    {
+                        throw new Exception("filestore_sid not found - FileRefId:" + request.ImageInfo.FileRefId + " Quality:" + request.ImageInfo.ImageQuality);
+                    }
+
+                    Dictionary<int, ImageMeta> sidAll = new Dictionary<int, ImageMeta>();
+
+                    for (int i = 0; i < t.Rows.Count; i++)
+                    {
+                        if (!sidAll.ContainsKey(Convert.ToInt32(t.Rows[i][0])))
+                        {
+                            sidAll.Add(Convert.ToInt32(t.Rows[i][0]), new ImageMeta() { FileStoreId = t.Rows[i][1].ToString(), InfraConID = Convert.ToInt32(t.Rows[i][2]) });
+                        }
+                    }
+
+                    if (sidAll.ContainsKey((int)request.ImageInfo.ImageQuality))
+                    {
+                        request.ImageInfo.FileStoreId = sidAll[(int)request.ImageInfo.ImageQuality].FileStoreId;
+                        request.ImageInfo.InfraConID = sidAll[(int)request.ImageInfo.ImageQuality].InfraConID;
+                    }
+                    else
+                    {
+                        request.ImageInfo.FileStoreId = sidAll[(int)ImageQuality.original].FileStoreId;
+                        request.ImageInfo.InfraConID = sidAll[(int)ImageQuality.original].InfraConID;
+                    }
+
+                    fb = this.InfraConnectionFactory.FilesDB.DownloadFileById(request.ImageInfo.FileStoreId, request.ImageInfo.FileCategory, request.ImageInfo.InfraConID);
+
+                    if (fb != null)
+                        EbFile.Bytea_ToFile(fb, sFilePath);
+                }
+
+                if (File.Exists(sFilePath))
+                {
+                    ms = new MemoryStream(File.ReadAllBytes(sFilePath));
+
+                    dfs.StreamWrapper = new MemorystreamWrapper(ms);
+                    dfs.FileDetails = new FileMeta
+                    {
+                        FileName = request.ImageInfo.FileName,
+                        FileType = request.ImageInfo.FileType,
+                        Length = request.ImageInfo.Length,
+                        FileStoreId = request.ImageInfo.FileStoreId,
+                        UploadDateTime = request.ImageInfo.UploadDateTime,
+                        MetaDataDictionary = (request.ImageInfo.MetaDataDictionary != null) ? request.ImageInfo.MetaDataDictionary : new Dictionary<String, List<string>>() { },
+                    };
+                }
+                else
+                    throw new Exception("File Not Found");
+            }
+            catch (FormatException e)
+            {
+                Console.WriteLine("ObjectId not in Correct Format: " + request.ImageInfo.FileName);
+                Console.WriteLine("Exception: " + e.ToString());
+            }
+            catch (Exception e)
+            {
+                Log.Info("Exception:" + e.ToString());
+            }
+
+            return dfs;
+        }
     }
 }
