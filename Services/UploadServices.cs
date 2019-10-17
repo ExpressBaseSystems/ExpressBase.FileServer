@@ -208,7 +208,7 @@ namespace ExpressBase.StaticFileServer
             try
             {
                 Console.WriteLine("Cat: " + request.Category);
-                Console.WriteLine("Ids: " + request.FileRefId);
+                Console.WriteLine("Ids: " + request.FileRefId.Join(","));
                 DbParameter[] parameters =
               {
                 this.EbConnectionFactory.DataDB.GetNewParameter("categry", EbDbTypes.String,request.Category),
