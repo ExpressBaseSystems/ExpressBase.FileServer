@@ -118,7 +118,7 @@ namespace ExpressBase.StaticFileServer
                 req.UserAuthId = request.UserAuthId;
                 req.BToken = (!String.IsNullOrEmpty(this.Request.Authorization)) ? this.Request.Authorization.Replace("Bearer", string.Empty).Trim() : String.Empty;
                 req.RToken = (!String.IsNullOrEmpty(this.Request.Headers["rToken"])) ? this.Request.Headers["rToken"] : String.Empty;
-                
+
                 req.ImageRefId = this.GetFileRefIdInfra(request.UserId, request.ImageInfo.FileName, request.ImageInfo.FileType, request.ImageInfo.MetaDataDictionary.ToJson(), request.ImageInfo.FileCategory, request.ImageInfo.Context);
 
                 this.MessageProducer3.Publish(req);
@@ -207,6 +207,8 @@ namespace ExpressBase.StaticFileServer
             string sql = EbConnectionFactory.DataDB.EB_FILECATEGORYCHANGE;
             try
             {
+                Console.WriteLine("Cat: " + request.Category);
+                Console.WriteLine("Ids: " + request.FileRefId);
                 DbParameter[] parameters =
               {
                 this.EbConnectionFactory.DataDB.GetNewParameter("categry", EbDbTypes.String,request.Category),
@@ -219,7 +221,7 @@ namespace ExpressBase.StaticFileServer
             {
                 result = 0;
                 Console.BackgroundColor = ConsoleColor.Red;
-                Console.WriteLine("Exception while updating Category:", ex.Message);
+                Console.WriteLine("Exception while updating Category:" + ex.Message);
             }
 
             return new FileCategoryChangeResponse { Status = (result > 0) ? true : false };
