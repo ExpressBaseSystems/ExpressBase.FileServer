@@ -212,7 +212,7 @@ namespace ExpressBase.StaticFileServer
                 Console.WriteLine("Cat: " + request.Category);
                 Console.WriteLine("Ids: " + request.FileRefId.Join(","));
 
-                string slectquery = @"SELECT id,tags FROM eb_files_ref WHERE id = ANY(string_to_array(:ids,',')::int[]);";
+                string slectquery = EbConnectionFactory.DataDB.EB_FILECATEGORYCHANGE;
 
                 DbParameter[] parameters =
                 {
