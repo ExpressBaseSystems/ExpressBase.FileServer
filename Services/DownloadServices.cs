@@ -3,6 +3,7 @@ using ExpressBase.Common.Constants;
 using ExpressBase.Common.Data;
 using ExpressBase.Common.EbServiceStack.ReqNRes;
 using ExpressBase.Common.Enums;
+using ExpressBase.Common.Files;
 using ExpressBase.Common.Structures;
 using ServiceStack;
 using System;
