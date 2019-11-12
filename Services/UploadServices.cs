@@ -4,10 +4,12 @@ using ExpressBase.Common.Data;
 using ExpressBase.Common.EbServiceStack.ReqNRes;
 using ExpressBase.Common.Enums;
 using ExpressBase.Common.Structures;
+using Newtonsoft.Json;
 using ServiceStack;
 using ServiceStack.Messaging;
 using System;
 using System.Data.Common;
+using System.Text;
 
 namespace ExpressBase.StaticFileServer
 {
@@ -33,7 +35,7 @@ namespace ExpressBase.StaticFileServer
             try
             {
                 string context = string.IsNullOrEmpty(request.FileDetails.Context) ? StaticFileConstants.CONTEXT_DEFAULT : request.FileDetails.Context;
-                string meta = (request.FileDetails.MetaDataDictionary == null) ? "" : request.FileDetails.MetaDataDictionary.ToString();
+                string meta = request.FileDetails.MetaDataDictionary.ToJson();
                 request.FileDetails.FileRefId = GetFileRefId(request.UserId, request.FileDetails.FileName, request.FileDetails.FileType, meta, request.FileDetails.FileCategory, context);
 
                 Log.Info("FileRefId : " + request.FileDetails.FileRefId);
@@ -118,7 +120,7 @@ namespace ExpressBase.StaticFileServer
                 req.UserAuthId = request.UserAuthId;
                 req.BToken = (!String.IsNullOrEmpty(this.Request.Authorization)) ? this.Request.Authorization.Replace("Bearer", string.Empty).Trim() : String.Empty;
                 req.RToken = (!String.IsNullOrEmpty(this.Request.Headers["rToken"])) ? this.Request.Headers["rToken"] : String.Empty;
-                
+
                 req.ImageRefId = this.GetFileRefIdInfra(request.UserId, request.ImageInfo.FileName, request.ImageInfo.FileType, request.ImageInfo.MetaDataDictionary.ToJson(), request.ImageInfo.FileCategory, request.ImageInfo.Context);
 
                 this.MessageProducer3.Publish(req);
@@ -204,22 +206,42 @@ namespace ExpressBase.StaticFileServer
         public FileCategoryChangeResponse Post(FileCategoryChangeRequest request)
         {
             int result;
-            string sql = EbConnectionFactory.DataDB.EB_FILECATEGORYCHANGE;
+            //string sql = EbConnectionFactory.DataDB.EB_FILECATEGORYCHANGE;
             try
             {
+                Console.WriteLine("Cat: " + request.Category);
+                Console.WriteLine("Ids: " + request.FileRefId.Join(","));
+
+                string slectquery = EbConnectionFactory.DataDB.EB_FILECATEGORYCHANGE;
+
                 DbParameter[] parameters =
-              {
-                this.EbConnectionFactory.DataDB.GetNewParameter("categry", EbDbTypes.String,request.Category),
-                this.EbConnectionFactory.DataDB.GetNewParameter("ids", EbDbTypes.String, request.FileRefId.Join(",")),
+                {
+                    this.EbConnectionFactory.DataDB.GetNewParameter("ids", EbDbTypes.String, request.FileRefId.Join(",")),
                 };
 
-                result = this.EbConnectionFactory.DataDB.DoNonQuery(sql, parameters);
+                EbDataTable dt = this.EbConnectionFactory.DataDB.DoQuery(slectquery, parameters);
+
+                StringBuilder dystring = new StringBuilder();
+
+                foreach(EbDataRow row in dt.Rows)
+                {
+                    int id = Convert.ToInt32(row["id"]);
+
+                    EbFileMeta meta = JsonConvert.DeserializeObject<EbFileMeta>(row["tags"].ToString());
+
+                    meta.Category.Clear();
+                    meta.Category.Add(request.Category);
+                    string serialized = JsonConvert.SerializeObject(meta);
+                    dystring.Append(string.Format("UPDATE eb_files_ref SET tags='{0}' WHERE id={1};", serialized, id));
+                }
+
+                result = this.EbConnectionFactory.DataDB.DoNonQuery(dystring.ToString());
             }
             catch (Exception ex)
             {
                 result = 0;
                 Console.BackgroundColor = ConsoleColor.Red;
-                Console.WriteLine("Exception while updating Category:", ex.Message);
+                Console.WriteLine("Exception while updating Category:" + ex.Message);
             }
 
             return new FileCategoryChangeResponse { Status = (result > 0) ? true : false };
