@@ -78,12 +78,7 @@ namespace ExpressBase.StaticFileServer.Services
                 {
                     EbFileCategory category = request.FileDetails.FileCategory;
 
-                    string Qry = @"SELECT 
-                                        B.filestore_sid , B.filedb_con_id
-                                   FROM 
-                                        eb_files_ref A, eb_files_ref_variations B
-                                   WHERE 
-                                        A.id=B.eb_files_ref_id AND A.id=:fileref;";
+                    string Qry = this.EbConnectionFactory.DataDB.EB_DOWNLOAD_FILE_BY_ID;
 
                     DbParameter[] parameters =
                     {
@@ -216,14 +211,7 @@ namespace ExpressBase.StaticFileServer.Services
                 {
                     EbFileCategory category = request.ImageInfo.FileCategory;
 
-                    string Qry = @"SELECT 
-                                        B.imagequality_id, B.filestore_sid, B.filedb_con_id
-                                   FROM 
-                                        eb_files_ref A, eb_files_ref_variations B
-                                   WHERE 
-                                        A.id=B.eb_files_ref_id AND A.id=:fileref
-                                   ORDER BY 
-                                        B.imagequality_id;";
+                    string Qry = this.EbConnectionFactory.DataDB.EB_DOWNLOAD_IMAGE_BY_ID;
 
                     DbParameter[] parameters = { this.EbConnectionFactory.DataDB.GetNewParameter("fileref", EbDbTypes.Int32, request.ImageInfo.FileRefId) };
                     EbDataTable t = this.EbConnectionFactory.DataDB.DoQuery(Qry, parameters);
@@ -372,16 +360,7 @@ namespace ExpressBase.StaticFileServer.Services
             {
                 if (!System.IO.File.Exists(sFilePath))
                 {
-                    string qry_refId = @"SELECT 
-                                            V.filestore_sid , V.filedb_con_id
-                                        FROM 
-                                            eb_files_ref_variations V 
-                                        INNER JOIN 
-                                            eb_users U
-                                        ON 
-                                            V.eb_files_ref_id = U.dprefid
-                                        WHERE 
-                                            U.id = :userid";
+                    string qry_refId = this.EbConnectionFactory.DataDB.EB_DOWNLOAD_DP;
                     //AND V.imagequality_id = 150
                     DbParameter[] parameters =
                     {
