@@ -27,6 +27,58 @@ namespace ExpressBase.StaticFileServer
         //RETURNING id";
 
         [Authenticate]
+        public FileUploadResponse Post(FileUploadRequest request)//common end point for upload
+        {
+            FileUploadResponse response = new FileUploadResponse();
+            Log.Info("Inside FileUpload common");
+            try
+            {
+                string context = string.IsNullOrEmpty(request.FileDetails.Context) ? StaticFileConstants.CONTEXT_DEFAULT : request.FileDetails.Context;
+                string meta = request.FileDetails.MetaDataDictionary.ToJson();
+                request.FileDetails.FileRefId = GetFileRefId(request.UserId, request.FileDetails.FileName, request.FileDetails.FileType, meta, request.FileDetails.FileCategory, context);
+
+                Log.Info("FileRefId : " + request.FileDetails.FileRefId);
+
+                if(request.FileCategory == EbFileCategory.File)
+                {
+                    this.MessageProducer3.Publish(new UploadFileRequest()
+                    {
+                        FileCategory = EbFileCategory.File,
+                        FileRefId = request.FileDetails.FileRefId,
+                        Byte = request.FileByte,
+                        SolnId = request.SolnId,
+                        UserId = request.UserId,
+                        UserAuthId = request.UserAuthId,
+                        BToken = (!String.IsNullOrEmpty(this.Request.Authorization)) ? this.Request.Authorization.Replace("Bearer", string.Empty).Trim() : String.Empty,
+                        RToken = (!String.IsNullOrEmpty(this.Request.Headers["rToken"])) ? this.Request.Headers["rToken"] : String.Empty
+                    });
+                }
+                else if (request.FileCategory == EbFileCategory.Images)
+                {
+                    this.MessageProducer3.Publish(new UploadImageRequest()
+                    {
+                        FileCategory = EbFileCategory.Images,
+                        ImageRefId = request.FileDetails.FileRefId,
+                        Byte = request.FileByte,
+                        SolnId = request.SolnId,
+                        UserId = request.UserId,
+                        UserAuthId = request.UserAuthId,
+                        BToken = (!String.IsNullOrEmpty(this.Request.Authorization)) ? this.Request.Authorization.Replace("Bearer", string.Empty).Trim() : String.Empty,
+                        RToken = (!String.IsNullOrEmpty(this.Request.Headers["rToken"])) ? this.Request.Headers["rToken"] : String.Empty
+                    });
+                }
+                Log.Info("File Pushed to MQ");
+                response.FileRefId = request.FileDetails.FileRefId;
+            }
+            catch(Exception ex)
+            {
+                Log.Info("Exception:" + ex.StackTrace);
+                //res.ResponseStatus.Message = e.Message;
+            }
+            return response;
+        }
+
+        [Authenticate]
         public UploadAsyncResponse Post(UploadFileAsyncRequest request)
         {
             Log.Info("Inside FileUpload");
