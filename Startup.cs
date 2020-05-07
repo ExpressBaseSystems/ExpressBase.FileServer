@@ -106,17 +106,17 @@ namespace ExpressBase.StaticFileServer
             var redisPassword = Environment.GetEnvironmentVariable(EnvironmentConstants.EB_REDIS_PASSWORD);
             var redisPort = Environment.GetEnvironmentVariable(EnvironmentConstants.EB_REDIS_PORT);
             RedisClient client = null;
-            if (env == "Staging")
-            {
-                container.Register<IRedisClientsManager>(c => new RedisManagerPool(redisServer));
-                client = (container.Resolve<IRedisClientsManager>() as RedisManagerPool).GetClient() as RedisClient;
-            }
-            else
-            {
+            //if (env == "Staging")
+            //{
+            //    container.Register<IRedisClientsManager>(c => new RedisManagerPool(redisServer));
+            //    client = (container.Resolve<IRedisClientsManager>() as RedisManagerPool).GetClient() as RedisClient;
+            //}
+            //else
+            //{
                 var redisConnectionString = string.Format("redis://{0}@{1}:{2}", redisPassword, redisServer, redisPort);
                 container.Register<IRedisClientsManager>(c => new RedisManagerPool(redisConnectionString));
                 client = (container.Resolve<IRedisClientsManager>() as RedisManagerPool).GetClient() as RedisClient;
-            }
+            //}
 
             //Setting Assembly version in Redis
 
