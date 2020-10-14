@@ -64,6 +64,7 @@ namespace ExpressBase.StaticFileServer.Services
         [Authenticate]
         public DownloadFileResponse Get(DownloadFileByIdRequest request)
         {
+            Console.WriteLine("In DownloadFileByIdRequest");
             byte[] fb = new byte[0];
 
             string sFilePath = string.Format("../StaticFiles/{0}/{1}", request.SolnId, request.FileDetails.FileRefId);
@@ -197,6 +198,8 @@ namespace ExpressBase.StaticFileServer.Services
         [Authenticate]
         public DownloadFileResponse Get(DownloadImageByIdRequest request)
         {
+            Console.WriteLine("In DownloadImageByIdRequest");
+
             byte[] fb = new byte[0];
 
             string sFilePath = string.Format("../StaticFiles/{0}/{1}/{2}", request.SolnId, request.ImageInfo.ImageQuality, request.ImageInfo.FileRefId);
