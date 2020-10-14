@@ -205,10 +205,14 @@ namespace ExpressBase.StaticFileServer.Services
 
             DownloadFileResponse dfs = new DownloadFileResponse();
 
+            Console.WriteLine("Download Image Info: " + request.ImageInfo.ToJson());
+            
             try
             {
                 if (!System.IO.File.Exists(sFilePath))
                 {
+                    Console.WriteLine("Image Not in Cache: " + sFilePath);
+
                     EbFileCategory category = request.ImageInfo.FileCategory;
 
                     string Qry = this.EbConnectionFactory.DataDB.EB_DOWNLOAD_IMAGE_BY_ID;
@@ -242,6 +246,9 @@ namespace ExpressBase.StaticFileServer.Services
 
                     if (fb != null)
                         EbFile.Bytea_ToFile(fb, sFilePath);
+                    else
+                        Console.WriteLine("No File Found in : FileStoreId: " + request.ImageInfo.FileStoreId);
+
                 }
 
                 if (File.Exists(sFilePath))
