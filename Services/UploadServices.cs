@@ -115,6 +115,42 @@ namespace ExpressBase.StaticFileServer
         }
 
         [Authenticate]
+        public UploadAsyncResponse Post(UploadAudioAsyncRequest request)
+        {
+            Log.Info("Inside Audio Upload");
+
+            UploadAsyncResponse res = new UploadAsyncResponse();
+            try
+            {
+                string context = string.IsNullOrEmpty(request.FileDetails.Context) ? StaticFileConstants.CONTEXT_DEFAULT : request.FileDetails.Context;
+                string meta = request.FileDetails.MetaDataDictionary.ToJson();
+                request.FileDetails.FileRefId = GetFileRefId(request.UserId, request.FileDetails.FileName, request.FileDetails.FileType, meta, request.FileDetails.FileCategory, context);
+
+                Log.Info("FileRefId : " + request.FileDetails.FileRefId);
+
+                this.MessageProducer3.Publish(new UploadFileRequest()
+                {
+                    FileRefId = request.FileDetails.FileRefId,
+                    Byte = request.FileByte,
+                    SolnId = request.SolnId,
+                    UserId = request.UserId,
+                    UserAuthId = request.UserAuthId,
+                    BToken = (!String.IsNullOrEmpty(this.Request.Authorization)) ? this.Request.Authorization.Replace("Bearer", string.Empty).Trim() : String.Empty,
+                    RToken = (!String.IsNullOrEmpty(this.Request.Headers["rToken"])) ? this.Request.Headers["rToken"] : String.Empty
+                });
+                res.FileRefId = request.FileDetails.FileRefId;
+
+                Log.Info("File Pushed to MQ");
+            }
+            catch (Exception e)
+            {
+                Log.Info("Exception:" + e.StackTrace);
+                res.ResponseStatus.Message = e.Message;
+            }
+            return res;
+        }
+
+        [Authenticate]
         public UploadAsyncResponse Post(UploadImageAsyncRequest request)
         {
             UploadAsyncResponse res = new UploadAsyncResponse();
