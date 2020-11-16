@@ -80,10 +80,8 @@ namespace ExpressBase.StaticFileServer
             {
                 HashAlgorithm = "RS256",
                 PublicKeyXml = Environment.GetEnvironmentVariable(EnvironmentConstants.EB_JWT_PUBLIC_KEY_XML),
-#if (DEBUG)
                 RequireSecureConnection = false,
                 //EncryptPayload = true,
-#endif
             };
 
             this.Plugins.Add(new CorsFeature(allowedHeaders: "Content-Type, Authorization, Access-Control-Allow-Origin, Access-Control-Allow-Credentials"));
@@ -160,7 +158,11 @@ namespace ExpressBase.StaticFileServer
                         log.Info("In Auth Header");
                         var auth = req.Headers[HttpHeaders.Authorization];
                         if (string.IsNullOrEmpty(auth))
+                        {
+                            Console.WriteLine("*********NO AUTHENTICATION HEADER");
                             res.ReturnAuthRequired();
+                            
+                        }
                         else
                         {
                             if (req.Headers[CacheConstants.RTOKEN] != null)

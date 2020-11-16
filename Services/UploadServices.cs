@@ -163,6 +163,8 @@ namespace ExpressBase.StaticFileServer
                 req = new UploadImageRequest();
             else if (request.ImageInfo.FileCategory == EbFileCategory.SolLogo)
                 req = new UploadLogoRequest();
+			else if (request.ImageInfo.FileCategory == EbFileCategory.LocationFile)
+                req = new UploadLocRequest();
 
             try
             {
