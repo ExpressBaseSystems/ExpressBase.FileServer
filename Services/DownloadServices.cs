@@ -64,11 +64,8 @@ namespace ExpressBase.StaticFileServer.Services
         [Authenticate]
         public DownloadFileResponse Get(DownloadFileByIdRequest request)
         {
-            byte[] fb = new byte[0];
 
             string sFilePath = string.Format("../StaticFiles/{0}/{1}", request.SolnId, request.FileDetails.FileRefId);
-
-            MemoryStream ms = null;
 
             DownloadFileResponse dfs = new DownloadFileResponse();
 
@@ -80,8 +77,7 @@ namespace ExpressBase.StaticFileServer.Services
 
                     string Qry = this.EbConnectionFactory.DataDB.EB_DOWNLOAD_FILE_BY_ID;
 
-                    DbParameter[] parameters =
-                    {
+                    DbParameter[] parameters = {
                         this.EbConnectionFactory.DataDB.GetNewParameter("fileref", EbDbTypes.Int32, request.FileDetails.FileRefId),
                     };
 
@@ -93,7 +89,7 @@ namespace ExpressBase.StaticFileServer.Services
                     }
                     else { throw new Exception("File Not Found in Database , fileref = " + request.FileDetails.FileRefId); }
 
-                    fb = this.EbConnectionFactory.FilesDB.DownloadFileById(request.FileDetails.FileStoreId, category, request.FileDetails.InfraConID);
+                    byte[] fb = this.EbConnectionFactory.FilesDB.DownloadFileById(request.FileDetails.FileStoreId, category, request.FileDetails.InfraConID);
 
                     if (fb != null)
                     {
@@ -103,7 +99,7 @@ namespace ExpressBase.StaticFileServer.Services
 
                 if (File.Exists(sFilePath))
                 {
-                    ms = new MemoryStream(File.ReadAllBytes(sFilePath));
+                    MemoryStream ms = new MemoryStream(File.ReadAllBytes(sFilePath));
 
                     dfs.StreamWrapper = new MemorystreamWrapper(ms);
                     dfs.FileDetails = new FileMeta
