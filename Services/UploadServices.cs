@@ -135,6 +135,7 @@ namespace ExpressBase.StaticFileServer
                     SolnId = request.SolnId,
                     UserId = request.UserId,
                     UserAuthId = request.UserAuthId,
+                    FileCategory = request.FileDetails.FileCategory,
                     BToken = (!String.IsNullOrEmpty(this.Request.Authorization)) ? this.Request.Authorization.Replace("Bearer", string.Empty).Trim() : String.Empty,
                     RToken = (!String.IsNullOrEmpty(this.Request.Headers["rToken"])) ? this.Request.Headers["rToken"] : String.Empty
                 });
