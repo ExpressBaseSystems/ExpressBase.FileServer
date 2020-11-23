@@ -50,8 +50,9 @@ namespace ExpressBase.StaticFileServer
                         UserId = request.UserId,
                         UserAuthId = request.UserAuthId,
                         BToken = (!String.IsNullOrEmpty(this.Request.Authorization)) ? this.Request.Authorization.Replace("Bearer", string.Empty).Trim() : String.Empty,
-                        RToken = (!String.IsNullOrEmpty(this.Request.Headers["rToken"])) ? this.Request.Headers["rToken"] : String.Empty
-                    });
+                        RToken = (!String.IsNullOrEmpty(this.Request.Headers["rToken"])) ? this.Request.Headers["rToken"] : String.Empty,
+						SubscriptionId = (!String.IsNullOrEmpty(this.Request.Headers[TokenConstants.SSE_SUBSCRIP_ID])) ? this.Request.Headers[TokenConstants.SSE_SUBSCRIP_ID] : String.Empty
+					});
                 }
                 else if (request.FileCategory == EbFileCategory.Images)
                 {
@@ -64,8 +65,9 @@ namespace ExpressBase.StaticFileServer
                         UserId = request.UserId,
                         UserAuthId = request.UserAuthId,
                         BToken = (!String.IsNullOrEmpty(this.Request.Authorization)) ? this.Request.Authorization.Replace("Bearer", string.Empty).Trim() : String.Empty,
-                        RToken = (!String.IsNullOrEmpty(this.Request.Headers["rToken"])) ? this.Request.Headers["rToken"] : String.Empty
-                    });
+                        RToken = (!String.IsNullOrEmpty(this.Request.Headers["rToken"])) ? this.Request.Headers["rToken"] : String.Empty,
+						SubscriptionId = (!String.IsNullOrEmpty(this.Request.Headers[TokenConstants.SSE_SUBSCRIP_ID])) ? this.Request.Headers[TokenConstants.SSE_SUBSCRIP_ID] : String.Empty
+					});
                 }
                 Log.Info("File Pushed to MQ");
                 response.FileRefId = request.FileDetails.FileRefId;
@@ -100,8 +102,9 @@ namespace ExpressBase.StaticFileServer
                     UserId = request.UserId,
                     UserAuthId = request.UserAuthId,
                     BToken = (!String.IsNullOrEmpty(this.Request.Authorization)) ? this.Request.Authorization.Replace("Bearer", string.Empty).Trim() : String.Empty,
-                    RToken = (!String.IsNullOrEmpty(this.Request.Headers["rToken"])) ? this.Request.Headers["rToken"] : String.Empty
-                });
+                    RToken = (!String.IsNullOrEmpty(this.Request.Headers["rToken"])) ? this.Request.Headers["rToken"] : String.Empty,
+					SubscriptionId = (!String.IsNullOrEmpty(this.Request.Headers[TokenConstants.SSE_SUBSCRIP_ID])) ? this.Request.Headers[TokenConstants.SSE_SUBSCRIP_ID] : String.Empty
+			});
                 res.FileRefId = request.FileDetails.FileRefId;
 
                 Log.Info("File Pushed to MQ");
@@ -141,6 +144,7 @@ namespace ExpressBase.StaticFileServer
                 req.UserAuthId = request.UserAuthId;
                 req.BToken = (!String.IsNullOrEmpty(this.Request.Authorization)) ? this.Request.Authorization.Replace("Bearer", string.Empty).Trim() : String.Empty;
                 req.RToken = (!String.IsNullOrEmpty(this.Request.Headers["rToken"])) ? this.Request.Headers["rToken"] : String.Empty;
+                req.SubscriptionId = (!String.IsNullOrEmpty(this.Request.Headers[TokenConstants.SSE_SUBSCRIP_ID])) ? this.Request.Headers[TokenConstants.SSE_SUBSCRIP_ID] : String.Empty;
 
                 req.ImageRefId = GetFileRefId(request.UserId, request.ImageInfo.FileName, request.ImageInfo.FileType, request.ImageInfo.MetaDataDictionary.ToJson(), request.ImageInfo.FileCategory, request.ImageInfo.Context);
 
@@ -174,8 +178,9 @@ namespace ExpressBase.StaticFileServer
                 req.UserAuthId = request.UserAuthId;
                 req.BToken = (!String.IsNullOrEmpty(this.Request.Authorization)) ? this.Request.Authorization.Replace("Bearer", string.Empty).Trim() : String.Empty;
                 req.RToken = (!String.IsNullOrEmpty(this.Request.Headers["rToken"])) ? this.Request.Headers["rToken"] : String.Empty;
+				req.SubscriptionId = (!String.IsNullOrEmpty(this.Request.Headers[TokenConstants.SSE_SUBSCRIP_ID])) ? this.Request.Headers[TokenConstants.SSE_SUBSCRIP_ID] : String.Empty;
 
-                req.ImageRefId = this.GetFileRefIdInfra(request.UserId, request.ImageInfo.FileName, request.ImageInfo.FileType, request.ImageInfo.MetaDataDictionary.ToJson(), request.ImageInfo.FileCategory, request.ImageInfo.Context);
+				req.ImageRefId = this.GetFileRefIdInfra(request.UserId, request.ImageInfo.FileName, request.ImageInfo.FileType, request.ImageInfo.MetaDataDictionary.ToJson(), request.ImageInfo.FileCategory, request.ImageInfo.Context);
 
                 this.MessageProducer3.Publish(req);
                 res.FileRefId = req.ImageRefId;
