@@ -158,7 +158,11 @@ namespace ExpressBase.StaticFileServer
                         log.Info("In Auth Header");
                         var auth = req.Headers[HttpHeaders.Authorization];
                         if (string.IsNullOrEmpty(auth))
+                        {
+                            Console.WriteLine("*********NO AUTHENTICATION HEADER");
                             res.ReturnAuthRequired();
+                            
+                        }
                         else
                         {
                             if (req.Headers[CacheConstants.RTOKEN] != null)

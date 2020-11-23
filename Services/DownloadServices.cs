@@ -64,6 +64,7 @@ namespace ExpressBase.StaticFileServer.Services
         [Authenticate]
         public DownloadFileResponse Get(DownloadFileByIdRequest request)
         {
+            Console.WriteLine("In DownloadFileByIdRequest");
             byte[] fb = new byte[0];
 
             string sFilePath = string.Format("../StaticFiles/{0}/{1}", request.SolnId, request.FileDetails.FileRefId);
@@ -197,6 +198,8 @@ namespace ExpressBase.StaticFileServer.Services
         [Authenticate]
         public DownloadFileResponse Get(DownloadImageByIdRequest request)
         {
+            Console.WriteLine("In DownloadImageByIdRequest");
+
             byte[] fb = new byte[0];
 
             string sFilePath = string.Format("../StaticFiles/{0}/{1}/{2}", request.SolnId, request.ImageInfo.ImageQuality, request.ImageInfo.FileRefId);
@@ -205,10 +208,14 @@ namespace ExpressBase.StaticFileServer.Services
 
             DownloadFileResponse dfs = new DownloadFileResponse();
 
+            Console.WriteLine("Download Image Info: " + request.ImageInfo.ToJson());
+            
             try
             {
                 if (!System.IO.File.Exists(sFilePath))
                 {
+                    Console.WriteLine("Image Not in Cache: " + sFilePath);
+
                     EbFileCategory category = request.ImageInfo.FileCategory;
 
                     string Qry = this.EbConnectionFactory.DataDB.EB_DOWNLOAD_IMAGE_BY_ID;
@@ -242,6 +249,9 @@ namespace ExpressBase.StaticFileServer.Services
 
                     if (fb != null)
                         EbFile.Bytea_ToFile(fb, sFilePath);
+                    else
+                        Console.WriteLine("No File Found in : FileStoreId: " + request.ImageInfo.FileStoreId);
+
                 }
 
                 if (File.Exists(sFilePath))

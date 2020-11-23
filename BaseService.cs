@@ -39,6 +39,7 @@ namespace ExpressBase.StaticFileServer
 
         public BaseService(IEbConnectionFactory _dbf)
         {
+            Log.Info("In Base Service 1");
             this.EbConnectionFactory = _dbf as EbConnectionFactory;
         }
 
