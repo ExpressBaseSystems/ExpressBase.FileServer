@@ -65,7 +65,7 @@ namespace ExpressBase.StaticFileServer.Services
         public DownloadFileResponse Get(DownloadFileByIdRequest request)
         {
             Console.WriteLine("In DownloadFileByIdRequest");
-            byte[] fb = new byte[0];
+            byte[] fb;
 
             string sFilePath = string.Format("../StaticFiles/{0}/{1}", request.SolnId, request.FileDetails.FileRefId);
 
@@ -75,7 +75,7 @@ namespace ExpressBase.StaticFileServer.Services
 
             try
             {
-                if (!System.IO.File.Exists(sFilePath))
+                if (!File.Exists(sFilePath))
                 {
                     EbFileCategory category = request.FileDetails.FileCategory;
 
@@ -98,14 +98,18 @@ namespace ExpressBase.StaticFileServer.Services
 
                     if (fb != null)
                     {
-                        EbFile.Bytea_ToFile(fb, sFilePath);
+                        if (fb.Length < 262144)
+                            EbFile.Bytea_ToFile(fb, sFilePath);
+                        ms = new MemoryStream(fb);
                     }
                 }
-
-                if (File.Exists(sFilePath))
+                else
                 {
                     ms = new MemoryStream(File.ReadAllBytes(sFilePath));
+                }
 
+                if (ms != null)
+                {
                     dfs.StreamWrapper = new MemorystreamWrapper(ms);
                     dfs.FileDetails = new FileMeta
                     {
@@ -200,7 +204,7 @@ namespace ExpressBase.StaticFileServer.Services
         {
             Console.WriteLine("In DownloadImageByIdRequest");
 
-            byte[] fb = new byte[0];
+            byte[] fb;
 
             string sFilePath = string.Format("../StaticFiles/{0}/{1}/{2}", request.SolnId, request.ImageInfo.ImageQuality, request.ImageInfo.FileRefId);
 
@@ -209,10 +213,10 @@ namespace ExpressBase.StaticFileServer.Services
             DownloadFileResponse dfs = new DownloadFileResponse();
 
             Console.WriteLine("Download Image Info: " + request.ImageInfo.ToJson());
-            
+
             try
             {
-                if (!System.IO.File.Exists(sFilePath))
+                if (!File.Exists(sFilePath))
                 {
                     Console.WriteLine("Image Not in Cache: " + sFilePath);
 
@@ -248,16 +252,21 @@ namespace ExpressBase.StaticFileServer.Services
                     fb = this.EbConnectionFactory.FilesDB.DownloadFileById(request.ImageInfo.FileStoreId, category, request.ImageInfo.InfraConID);
 
                     if (fb != null)
-                        EbFile.Bytea_ToFile(fb, sFilePath);
+                    {
+                        if (fb.Length < 262144)//if file size less than 256Kb
+                            EbFile.Bytea_ToFile(fb, sFilePath);
+                        ms = new MemoryStream(fb);
+                    }
                     else
                         Console.WriteLine("No File Found in : FileStoreId: " + request.ImageInfo.FileStoreId);
-
                 }
-
-                if (File.Exists(sFilePath))
+                else
                 {
                     ms = new MemoryStream(File.ReadAllBytes(sFilePath));
+                }
 
+                if (ms != null)
+                {
                     dfs.StreamWrapper = new MemorystreamWrapper(ms);
                     dfs.FileDetails = new FileMeta
                     {
@@ -639,18 +648,18 @@ namespace ExpressBase.StaticFileServer.Services
             return dfs;
         }
 
-		public DownloadFileResponse Get(DownloadBotExtImgRequest request)
-		{
-			DownloadFileResponse dfs = new DownloadFileResponse();
-			MemoryStream ms = null;
-			byte[] fb = new byte[0];
-			string sFilePath = string.Format("../StaticFiles/botExt/{0}", request.RefId);
-			EbConnectionFactory ebConnectionFactory = new EbConnectionFactory(request.SolnId, this.Redis);
-			try
-			{
-				if (!System.IO.File.Exists(sFilePath))
-				{
-					string qry_refId = @"SELECT 
+        public DownloadFileResponse Get(DownloadBotExtImgRequest request)
+        {
+            DownloadFileResponse dfs = new DownloadFileResponse();
+            MemoryStream ms = null;
+            byte[] fb = new byte[0];
+            string sFilePath = string.Format("../StaticFiles/botExt/{0}", request.RefId);
+            EbConnectionFactory ebConnectionFactory = new EbConnectionFactory(request.SolnId, this.Redis);
+            try
+            {
+                if (!System.IO.File.Exists(sFilePath))
+                {
+                    string qry_refId = @"SELECT 
                                         B.imagequality_id, B.filestore_sid, B.filedb_con_id
                                     FROM 
                                         eb_files_ref A, eb_files_ref_variations B
@@ -658,75 +667,75 @@ namespace ExpressBase.StaticFileServer.Services
                                         A.id=B.eb_files_ref_id AND A.id=:fileref
                                     ORDER BY 
                                         B.imagequality_id;";
-					
-					DbParameter[] parameters =
-					{
-						ebConnectionFactory.DataDB.GetNewParameter("fileref",EbDbTypes.Int32, Convert.ToInt32(request.RefId)),
-					};
 
-					EbDataTable t = ebConnectionFactory.DataDB.DoQuery(qry_refId, parameters);
+                    DbParameter[] parameters =
+                    {
+                        ebConnectionFactory.DataDB.GetNewParameter("fileref",EbDbTypes.Int32, Convert.ToInt32(request.RefId)),
+                    };
 
-					if (t.Rows.Count == 0)
-					{
-						throw new Exception("filestore_sid not found - FileRefId:" + request.ImageInfo.FileRefId + " Quality:" + request.ImageInfo.ImageQuality);
-					}
+                    EbDataTable t = ebConnectionFactory.DataDB.DoQuery(qry_refId, parameters);
 
-					Dictionary<int, ImageMeta> sidAll = new Dictionary<int, ImageMeta>();
+                    if (t.Rows.Count == 0)
+                    {
+                        throw new Exception("filestore_sid not found - FileRefId:" + request.ImageInfo.FileRefId + " Quality:" + request.ImageInfo.ImageQuality);
+                    }
 
-					for (int i = 0; i < t.Rows.Count; i++)
-					{
-						if (!sidAll.ContainsKey(Convert.ToInt32(t.Rows[i][0])))
-						{
-							sidAll.Add(Convert.ToInt32(t.Rows[i][0]), new ImageMeta() { FileStoreId = t.Rows[i][1].ToString(), InfraConID = Convert.ToInt32(t.Rows[i][2]) });
-						}
-					}
+                    Dictionary<int, ImageMeta> sidAll = new Dictionary<int, ImageMeta>();
 
-					if (sidAll.ContainsKey((int)request.ImageInfo.ImageQuality))
-					{
-						request.ImageInfo.FileStoreId = sidAll[(int)request.ImageInfo.ImageQuality].FileStoreId;
-						request.ImageInfo.InfraConID = sidAll[(int)request.ImageInfo.ImageQuality].InfraConID;
-					}
-					else
-					{
-						request.ImageInfo.FileStoreId = sidAll[(int)ImageQuality.original].FileStoreId;
-						request.ImageInfo.InfraConID = sidAll[(int)ImageQuality.original].InfraConID;
-					}
+                    for (int i = 0; i < t.Rows.Count; i++)
+                    {
+                        if (!sidAll.ContainsKey(Convert.ToInt32(t.Rows[i][0])))
+                        {
+                            sidAll.Add(Convert.ToInt32(t.Rows[i][0]), new ImageMeta() { FileStoreId = t.Rows[i][1].ToString(), InfraConID = Convert.ToInt32(t.Rows[i][2]) });
+                        }
+                    }
 
-					fb = ebConnectionFactory.FilesDB.DownloadFileById(request.ImageInfo.FileStoreId, request.ImageInfo.FileCategory, request.ImageInfo.InfraConID);
+                    if (sidAll.ContainsKey((int)request.ImageInfo.ImageQuality))
+                    {
+                        request.ImageInfo.FileStoreId = sidAll[(int)request.ImageInfo.ImageQuality].FileStoreId;
+                        request.ImageInfo.InfraConID = sidAll[(int)request.ImageInfo.ImageQuality].InfraConID;
+                    }
+                    else
+                    {
+                        request.ImageInfo.FileStoreId = sidAll[(int)ImageQuality.original].FileStoreId;
+                        request.ImageInfo.InfraConID = sidAll[(int)ImageQuality.original].InfraConID;
+                    }
 
-					if (fb != null)
-						EbFile.Bytea_ToFile(fb, sFilePath);
-				}
+                    fb = ebConnectionFactory.FilesDB.DownloadFileById(request.ImageInfo.FileStoreId, request.ImageInfo.FileCategory, request.ImageInfo.InfraConID);
 
-				if (File.Exists(sFilePath))
-				{
-					ms = new MemoryStream(File.ReadAllBytes(sFilePath));
+                    if (fb != null)
+                        EbFile.Bytea_ToFile(fb, sFilePath);
+                }
 
-					dfs.StreamWrapper = new MemorystreamWrapper(ms);
-					dfs.FileDetails = new FileMeta
-					{
-						FileName = request.ImageInfo.FileName,
-						FileType = request.ImageInfo.FileType,
-						Length = request.ImageInfo.Length,
-						FileStoreId = request.ImageInfo.FileStoreId,
-						UploadDateTime = request.ImageInfo.UploadDateTime,
-						MetaDataDictionary = (request.ImageInfo.MetaDataDictionary != null) ? request.ImageInfo.MetaDataDictionary : new Dictionary<String, List<string>>() { },
-					};
-				}
-				else
-					throw new Exception("File Not Found");
-			}
-			catch (FormatException e)
-			{
-				Console.WriteLine("ObjectId not in Correct Format: " + request.ImageInfo.FileName);
-				Console.WriteLine("Exception: " + e.ToString());
-			}
-			catch (Exception e)
-			{
-				Log.Info("Exception:" + e.ToString());
-			}
+                if (File.Exists(sFilePath))
+                {
+                    ms = new MemoryStream(File.ReadAllBytes(sFilePath));
 
-			return dfs;
-		}
-	}
+                    dfs.StreamWrapper = new MemorystreamWrapper(ms);
+                    dfs.FileDetails = new FileMeta
+                    {
+                        FileName = request.ImageInfo.FileName,
+                        FileType = request.ImageInfo.FileType,
+                        Length = request.ImageInfo.Length,
+                        FileStoreId = request.ImageInfo.FileStoreId,
+                        UploadDateTime = request.ImageInfo.UploadDateTime,
+                        MetaDataDictionary = (request.ImageInfo.MetaDataDictionary != null) ? request.ImageInfo.MetaDataDictionary : new Dictionary<String, List<string>>() { },
+                    };
+                }
+                else
+                    throw new Exception("File Not Found");
+            }
+            catch (FormatException e)
+            {
+                Console.WriteLine("ObjectId not in Correct Format: " + request.ImageInfo.FileName);
+                Console.WriteLine("Exception: " + e.ToString());
+            }
+            catch (Exception e)
+            {
+                Log.Info("Exception:" + e.ToString());
+            }
+
+            return dfs;
+        }
+    }
 }
