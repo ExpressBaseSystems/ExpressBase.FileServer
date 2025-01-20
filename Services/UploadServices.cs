@@ -117,6 +117,35 @@ namespace ExpressBase.StaticFileServer
         }
 
         [Authenticate]
+        public FileUploadResponse Get(GetFileRefIdByInsertingNewRowRequest req)
+        {
+            FileUploadResponse resp = new FileUploadResponse { ResponseStatus = new ResponseStatus() { Message = "Success" } };
+            try
+            {
+                string qry = $@"INSERT INTO eb_files_ref (userid, filename, filetype, tags, filecategory, uploadts, context) VALUES 
+(@userid, @filename, @filetype, '{{}}', @filecategory, NOW(), (@objid || '_' || (SELECT id FROM {req.Table.Replace(' ', '_')} WHERE {req.Column} = @value) || '_' || @file_ctrl_name)) RETURNING id";
+
+                EbDataTable table = this.EbConnectionFactory.DataDB.DoQuery(qry, new DbParameter[]
+                {
+                    this.EbConnectionFactory.DataDB.GetNewParameter("userid", EbDbTypes.Int32, req.UserId),
+                    this.EbConnectionFactory.DataDB.GetNewParameter("filename", EbDbTypes.String, req.FileName),
+                    this.EbConnectionFactory.DataDB.GetNewParameter("filetype", EbDbTypes.String, req.FileType),
+                    this.EbConnectionFactory.DataDB.GetNewParameter("filecategory", EbDbTypes.Int16, (int)req.FileCategory),
+                    this.EbConnectionFactory.DataDB.GetNewParameter("objid", EbDbTypes.String, req.ObjectId),
+                    this.EbConnectionFactory.DataDB.GetNewParameter("value", EbDbTypes.String, req.Value),
+                    this.EbConnectionFactory.DataDB.GetNewParameter("file_ctrl_name", EbDbTypes.String, req.FileControlName)
+                });
+
+                resp.FileRefId = Convert.ToInt32(table.Rows[0][0]);
+            }
+            catch (Exception e)
+            {
+                resp.ResponseStatus.Message = e.Message;
+            }
+            return resp;
+        }
+
+        [Authenticate]
         public UploadAsyncResponse Post(UploadAudioAsyncRequest request)
         {
             Log.Info("Inside Audio Upload");
