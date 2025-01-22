@@ -9,6 +9,7 @@ using ServiceStack;
 using ServiceStack.Messaging;
 using System;
 using System.Data.Common;
+using System.Linq;
 using System.Text;
 
 namespace ExpressBase.StaticFileServer
@@ -131,7 +132,7 @@ namespace ExpressBase.StaticFileServer
                 if (table.Rows.Count > 0 && int.TryParse(Convert.ToString(table.Rows[0][0]), out int IdVal))
                 {
                     qry = $@"INSERT INTO eb_files_ref (userid, filename, filetype, tags, filecategory, uploadts, context) 
-VALUES (@userid, @filename, @filetype, '{{}}', @filecategory, NOW(), (@objid || '_{IdVal}_' || @file_ctrl_name));
+VALUES (@userid, @filename, @filetype, '{{}}', @filecategory, {this.EbConnectionFactory.DataDB.EB_CURRENT_TIMESTAMP}, (@objid || '_{IdVal}_' || @file_ctrl_name));
 
 INSERT INTO eb_files_ref_variations (eb_files_ref_id, filestore_sid, length, imagequality_id, is_image, img_manp_ser_con_id, filedb_con_id)
     VALUES ((SELECT eb_currval('eb_files_ref_id_seq')), :filestoreid, :length, :imagequality_id, :is_image, :imgmanpserid, :filedb_con_id);
@@ -147,6 +148,83 @@ SELECT eb_currval('eb_files_ref_id_seq');
                         this.EbConnectionFactory.DataDB.GetNewParameter("filetype", EbDbTypes.String, req.FileType),
                         this.EbConnectionFactory.DataDB.GetNewParameter("filecategory", EbDbTypes.Int16, (int)req.FileCategory),
                         this.EbConnectionFactory.DataDB.GetNewParameter("objid", EbDbTypes.String, req.ObjectId),
+                        this.EbConnectionFactory.DataDB.GetNewParameter("file_ctrl_name", EbDbTypes.String, req.FileControlName),
+                        this.EbConnectionFactory.DataDB.GetNewParameter("filestoreid", EbDbTypes.String, req.FilestoreSid),
+                        this.EbConnectionFactory.DataDB.GetNewParameter("length", EbDbTypes.Int64, req.FileSize),
+                        this.EbConnectionFactory.DataDB.GetNewParameter("imagequality_id", EbDbTypes.Int32, (int)ImageQuality.original),
+                        this.EbConnectionFactory.DataDB.GetNewParameter("is_image", EbDbTypes.Boolean, true),
+                        this.EbConnectionFactory.DataDB.GetNewParameter("imgmanpserid", EbDbTypes.Int32, 0),
+                        this.EbConnectionFactory.DataDB.GetNewParameter("filedb_con_id", EbDbTypes.Int32, connId)
+                    });
+
+                    if (ds.Tables.Count == 1)
+                    {
+                        resp.FileRefId = Convert.ToInt32(ds.Tables[0].Rows[0][0]);
+                    }
+                    else
+                    {
+                        resp.ResponseStatus.Message = $"Operation failed. DataSet count is {ds.Tables.Count} instead of 1.";
+                    }
+                }
+                else
+                {
+                    resp.ResponseStatus.Message = $"No matching records found for {req.Table}.{req.Column}='{req.Value}'";
+                }
+            }
+            catch (Exception e)
+            {
+                resp.ResponseStatus.Message = e.Message;
+            }
+            return resp;
+        }
+
+        [Authenticate]
+        public FileUploadResponse Get(GetFileRefSimpleuploaderUpsertRequest req)
+        {
+            FileUploadResponse resp = new FileUploadResponse { ResponseStatus = new ResponseStatus() { Message = "Success" } };
+            try
+            {
+                string qry = $"SELECT id, {req.FileControlName} FROM {req.Table} WHERE {req.Column} = @value";
+                EbDataTable table = this.EbConnectionFactory.DataDB.DoQuery(qry, new DbParameter[]
+                {
+                    this.EbConnectionFactory.DataDB.GetNewParameter("value", EbDbTypes.String, req.Value)
+                });
+
+                if (table.Rows.Count > 0 && int.TryParse(Convert.ToString(table.Rows[0][0]), out int IdVal))
+                {
+                    string oldData = Convert.ToString(table.Rows[0][1]);
+                    string delQry = string.Empty;
+                    if (!string.IsNullOrWhiteSpace(oldData))
+                    {
+                        string[] arr = oldData.Split(',');
+                        if (arr.Select(e => int.TryParse(e, out int t)).ToList().Exists(e => !e))
+                        {
+                            resp.ResponseStatus.Message = $"Invalid existing data of Simple uploader ([id={IdVal}] => {req.Table}.{req.FileControlName}={oldData})";
+                            return resp;
+                        }
+                        delQry = $"UPDATE eb_files_ref SET eb_del='T', lastmodifiedby = :userid, lastmodifiedat = {this.EbConnectionFactory.DataDB.EB_CURRENT_TIMESTAMP} WHERE id IN ({oldData}) AND eb_del='F';";
+                    }
+
+                    qry = $@"INSERT INTO eb_files_ref (userid, filename, filetype, tags, filecategory, uploadts, context) 
+VALUES (@userid, @filename, @filetype, '{{}}', @filecategory, {this.EbConnectionFactory.DataDB.EB_CURRENT_TIMESTAMP}, 'default');
+
+INSERT INTO eb_files_ref_variations (eb_files_ref_id, filestore_sid, length, imagequality_id, is_image, img_manp_ser_con_id, filedb_con_id)
+    VALUES ((SELECT eb_currval('eb_files_ref_id_seq')), :filestoreid, :length, :imagequality_id, :is_image, :imgmanpserid, :filedb_con_id);
+
+{delQry}
+
+UPDATE {req.Table} SET {req.FileControlName}=(SELECT eb_currval('eb_files_ref_id_seq'))::TEXT WHERE id={IdVal};
+
+SELECT eb_currval('eb_files_ref_id_seq');
+";
+                    int connId = this.EbConnectionFactory.FilesDB.UsedConId > 0 ? this.EbConnectionFactory.FilesDB.UsedConId : this.EbConnectionFactory.FilesDB.DefaultConId;
+
+                    EbDataSet ds = this.EbConnectionFactory.DataDB.DoQueries(qry, new DbParameter[]
+                    {
+                        this.EbConnectionFactory.DataDB.GetNewParameter("userid", EbDbTypes.Int32, req.UserId),
+                        this.EbConnectionFactory.DataDB.GetNewParameter("filename", EbDbTypes.String, req.FileName),
+                        this.EbConnectionFactory.DataDB.GetNewParameter("filetype", EbDbTypes.String, req.FileType),
+                        this.EbConnectionFactory.DataDB.GetNewParameter("filecategory", EbDbTypes.Int16, (int)req.FileCategory),
                         this.EbConnectionFactory.DataDB.GetNewParameter("file_ctrl_name", EbDbTypes.String, req.FileControlName),
                         this.EbConnectionFactory.DataDB.GetNewParameter("filestoreid", EbDbTypes.String, req.FilestoreSid),
                         this.EbConnectionFactory.DataDB.GetNewParameter("length", EbDbTypes.Int64, req.FileSize),
