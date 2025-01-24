@@ -179,9 +179,9 @@ SELECT eb_currval('eb_files_ref_id_seq');
         }
 
         [Authenticate]
-        public FileUploadResponse Get(GetFileRefSimpleuploaderUpsertRequest req)
+        public GetFileRefSimpleuploaderUpsertResponse Get(GetFileRefSimpleuploaderUpsertRequest req)
         {
-            FileUploadResponse resp = new FileUploadResponse { ResponseStatus = new ResponseStatus() { Message = "Success" } };
+            GetFileRefSimpleuploaderUpsertResponse resp = new GetFileRefSimpleuploaderUpsertResponse { ResponseStatus = new ResponseStatus() { Message = "Success" } };
             try
             {
                 string qry = $"SELECT id, {req.FileControlName} FROM {req.Table} WHERE {req.Column} = @value";
@@ -192,6 +192,7 @@ SELECT eb_currval('eb_files_ref_id_seq');
 
                 if (table.Rows.Count > 0 && int.TryParse(Convert.ToString(table.Rows[0][0]), out int IdVal))
                 {
+                    resp.DataId = IdVal;
                     string oldData = Convert.ToString(table.Rows[0][1]);
                     string delQry = string.Empty;
                     if (!string.IsNullOrWhiteSpace(oldData))
